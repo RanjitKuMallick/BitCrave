@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Booking</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h2>User Booking</h2>
+  <form id="bookingForm">
+    <input type="text" id="userName" placeholder="Your Name" required><br>
+    <input type="text" id="bookingDetails" placeholder="Booking Details" required><br>
+    <button type="submit">Book</button>
+  </form>
+
+  <script>
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const userName = document.getElementById('userName').value;
+      const bookingDetails = document.getElementById('bookingDetails').value;
+
+      const bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+      bookings.push({
+        id: Date.now(),
+        userName,
+        bookingDetails,
+        status: 'pending',
+        order: null,
+        bill: null,
+        payment: 'unpaid'
+      });
+      localStorage.setItem('bookings', JSON.stringify(bookings));
+      alert('Booking submitted!');
+      this.reset();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BitCrave Admin Dashboard</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Custom Styles -->
+  <style>
+    body.dark-mode {
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+    .card.dark-mode {
+      background-color: #1e1e1e;
+      color: #fff;
+    }
+    .stats-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: transform 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .stats-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .feature-card {
+      transition: transform 0.3s ease;
+      border: none;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+    .feature-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Enhanced Navbar Styles */
+    .navbar {
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .navbar-brand {
+      transition: all 0.3s ease;
+    }
+    
+    .navbar-brand:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Enhanced Button Styles */
+    .btn {
+      transition: all 0.3s ease;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Smooth Transitions */
+    * {
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+
+<body class="bg-light">
+  <!-- Enhanced Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark px-4" style="background: linear-gradient(135deg, #1e293b, #0f172a); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+    <a class="navbar-brand" href="#" style="font-size: 1.5rem; font-weight: 700; color: #fbbf24 !important; text-decoration: none;">🍽️ BitCrave Admin</a>
+    <div class="ms-auto d-flex gap-2">
+      <span class="navbar-text me-3" id="adminInfo" style="color: rgba(255, 255, 255, 0.9);">Loading...</span>
+      <button id="darkModeToggle" class="btn btn-outline-light me-2" title="Toggle Dark Mode" style="border-color: rgba(255, 255, 255, 0.3); color: rgba(255, 255, 255, 0.9);">🌙</button>
+      <button onclick="logout()" class="btn btn-outline-danger" style="border-color: #dc2626; color: #dc2626; font-weight: 600;">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Dashboard -->
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2>Welcome to the Admin Dashboard</h2>
+        <p class="text-muted">Manage menu, reservations, gallery, orders, and events from here.</p>
+      </div>
+      <div class="text-end">
+        <small class="text-muted">Last updated: <span id="lastUpdated">Loading...</span></small>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-3 col-sm-6">
+        <div class="stats-card">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 id="totalReservations">0</h4>
+              <p class="mb-0">Total Reservations</p>
+            </div>
+            <div class="fs-1">📋</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="stats-card">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 id="todayReservations">0</h4>
+              <p class="mb-0">Today's Reservations</p>
+            </div>
+            <div class="fs-1">📅</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="stats-card">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 id="totalMenuItems">0</h4>
+              <p class="mb-0">Menu Items</p>
+            </div>
+            <div class="fs-1">🍽️</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="stats-card">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 id="totalEvents">0</h4>
+              <p class="mb-0">Events</p>
+            </div>
+            <div class="fs-1">🎉</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Cards -->
+    <div class="row g-4 mt-3">
+      <!-- Menu -->
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center p-3 shadow-sm feature-card">
+          <div class="fs-1 mb-3">🍽️</div>
+          <h5>Menu Management</h5>
+          <p class="text-muted">Add, edit, or remove dishes</p>
+          <a href="menu.html" class="btn btn-sm btn-primary">Manage Menu</a>
+        </div>
+      </div>
+      <!-- Reservations -->
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center p-3 shadow-sm feature-card">
+          <div class="fs-1 mb-3">📋</div>
+          <h5>Reservations</h5>
+          <p class="text-muted">View and manage bookings</p>
+          <a href="reservation.html" class="btn btn-sm btn-primary">View Reservations</a>
+        </div>
+      </div>
+      <!-- Gallery -->
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center p-3 shadow-sm feature-card">
+          <div class="fs-1 mb-3">📸</div>
+          <h5>Gallery</h5>
+          <p class="text-muted">Upload restaurant photos</p>
+          <a href="gallery.html" class="btn btn-sm btn-primary">Manage Gallery</a>
+        </div>
+      </div>
+      <!-- Events -->
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center p-3 shadow-sm feature-card">
+          <div class="fs-1 mb-3">🎉</div>
+          <h5>Events</h5>
+          <p class="text-muted">Add or view events</p>
+          <a href="event.html" class="btn btn-sm btn-primary">Manage Events</a>
+        </div>
+      </div>
+      <!-- Records -->
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center p-3 shadow-sm feature-card">
+          <div class="fs-1 mb-3">📊</div>
+          <h5>Reports</h5>
+          <p class="text-muted">View analytics and reports</p>
+          <a href="record.html" class="btn btn-sm btn-primary">View Reports</a>
+        </div>
+      </div>
+      <!-- Staff Management -->
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center p-3 shadow-sm feature-card">
+          <div class="fs-1 mb-3">👥</div>
+          <h5>Staff Management</h5>
+          <p class="text-muted">Manage staff and table assignments</p>
+          <a href="staff.html" class="btn btn-sm btn-primary">Manage Staff</a>
+        </div>
+      </div>
+      <!-- Settings -->
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center p-3 shadow-sm feature-card">
+          <div class="fs-1 mb-3">⚙️</div>
+          <h5>Settings</h5>
+          <p class="text-muted">System configuration</p>
+          <a href="settings.html" class="btn btn-sm btn-primary">Settings</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row mt-5">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0">📋 Recent Reservations</h6>
+          </div>
+          <div class="card-body">
+            <div id="recentReservations" class="list-group list-group-flush">
+              <div class="text-center text-muted">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0">🎉 Upcoming Events</h6>
+          </div>
+          <div class="card-body">
+            <div id="upcomingEvents" class="list-group list-group-flush">
+              <div class="text-center text-muted">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script for Logout and Dark Mode -->
+  <script>
+    const API_BASE = 'http://localhost:5000/api';
+
+    // Check authentication on page load
+    window.addEventListener('load', () => {
+      const token = localStorage.getItem("bitcrave-admin-token");
+      const sessionToken = localStorage.getItem("bitcrave-admin-session");
+      
+      if (!token || !sessionToken) {
+        alert("❌ Please login as admin first!");
+        window.location.href = "login.html";
+        return;
+      }
+      
+      // Verify session is still valid
+      fetch(`${API_BASE}/admin/session`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(response => {
+        if (response.ok) {
+          loadDashboardData();
+          updateLastUpdated();
+        } else {
+          // Session expired, redirect to login
+          localStorage.removeItem("bitcrave-admin-token");
+          localStorage.removeItem("bitcrave-admin-session");
+          localStorage.removeItem("bitcrave-admin-user");
+          alert("❌ Session expired. Please login again!");
+          window.location.href = "login.html";
+        }
+      })
+      .catch(() => {
+        alert("❌ Network error. Please check your connection!");
+        window.location.href = "login.html";
+      });
+    });
+
+    // Load dashboard data
+    async function loadDashboardData() {
+      const token = localStorage.getItem("bitcrave-admin-token");
+      
+      try {
+        // Load admin info
+        const adminUser = JSON.parse(localStorage.getItem("bitcrave-admin-user") || "{}");
+        document.getElementById("adminInfo").textContent = `Welcome, ${adminUser.username || 'Admin'}`;
+
+        // Load dashboard stats
+        const statsResponse = await fetch(`${API_BASE}/admin/dashboard/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (statsResponse.ok) {
+          const stats = await statsResponse.json();
+          
+          document.getElementById("totalReservations").textContent = stats.stats.reservations.total || 0;
+          document.getElementById("todayReservations").textContent = stats.stats.reservations.today || 0;
+          document.getElementById("totalMenuItems").textContent = stats.stats.menu.total || 0;
+          document.getElementById("totalEvents").textContent = stats.stats.events.total || 0;
+        }
+
+        // Load recent reservations
+        await loadRecentReservations(token);
+        
+        // Load upcoming events
+        await loadUpcomingEvents(token);
+
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        document.getElementById("adminInfo").textContent = "Error loading data";
+      }
+    }
+
+    // Load recent reservations
+    async function loadRecentReservations(token) {
+      try {
+        const response = await fetch(`${API_BASE}/reservations?limit=5`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const reservations = data.data || [];
+          
+          const container = document.getElementById("recentReservations");
+          
+          if (reservations.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted">No recent reservations</div>';
+            return;
+          }
+
+          container.innerHTML = reservations.map(r => `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>${r.name}</strong><br>
+                <small class="text-muted">${r.date} at ${r.time} • ${r.people} guests</small>
+              </div>
+              <span class="badge bg-${r.status === 'confirmed' ? 'success' : 'warning'} rounded-pill">
+                ${r.status}
+              </span>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Error loading recent reservations:', error);
+      }
+    }
+
+    // Load upcoming events
+    async function loadUpcomingEvents(token) {
+      try {
+        const response = await fetch(`${API_BASE}/events/upcoming`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const events = data.data || [];
+          
+          const container = document.getElementById("upcomingEvents");
+          
+          if (events.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted">No upcoming events</div>';
+            return;
+          }
+
+          container.innerHTML = events.slice(0, 5).map(e => `
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>${e.title}</strong><br>
+                  <small class="text-muted">${e.date} at ${e.time || 'TBD'}</small>
+                </div>
+                <span class="badge bg-primary rounded-pill">Event</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Error loading upcoming events:', error);
+      }
+    }
+
+    // Update last updated time
+    function updateLastUpdated() {
+      const now = new Date();
+      document.getElementById("lastUpdated").textContent = now.toLocaleString();
+    }
+
+    // Dark mode initialization
+    if (localStorage.getItem("bitcrave-theme") === "dark") {
+      document.body.classList.add("dark-mode");
+      document.querySelectorAll('.card').forEach(el => el.classList.add('dark-mode'));
+    }
+
+    // Dark mode toggle
+    document.getElementById("darkModeToggle").addEventListener("click", function () {
+      document.body.classList.toggle("dark-mode");
+      document.querySelectorAll('.card').forEach(el => el.classList.toggle('dark-mode'));
+      const mode = document.body.classList.contains("dark-mode") ? "dark" : "light";
+      localStorage.setItem("bitcrave-theme", mode);
+    });
+
+    // Logout function
+    async function logout() {
+      const token = localStorage.getItem("bitcrave-admin-token");
+      
+      try {
+        if (token) {
+          await fetch(`${API_BASE}/admin/logout`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        }
+      } catch (error) {
+        console.error('Logout error:', error);
+      } finally {
+        // Clear all stored data
+        localStorage.removeItem("bitcrave-admin-token");
+        localStorage.removeItem("bitcrave-admin-session");
+        localStorage.removeItem("bitcrave-admin-user");
+        
+        alert("✅ Logged out successfully!");
+        window.location.href = "login.html";
+      }
+    }
+
+    // Auto-refresh dashboard every 30 seconds
+    setInterval(() => {
+      loadDashboardData();
+      updateLastUpdated();
+    }, 30000);
+  </script>
+</body>
+</html>

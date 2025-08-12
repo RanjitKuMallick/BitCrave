@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Reservations</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <style>
+    body.dark-mode {
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+    .table.dark-mode {
+      background-color: #1e1e1e;
+      color: #ffffff;
+    }
+    .table-layout {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .table-box {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: not-allowed;
+    }
+    .available { background-color: #28a745; color: white; }
+    .booked { background-color: #dc3545; color: white; }
+    .user-requested { background-color: #ffc107; color: black; }
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .stats-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .filter-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+    <a class="navbar-brand fw-bold" href="dashboard.html">← Back to Dashboard</a>
+    <div class="ms-auto">
+      <button class="btn btn-outline-light" id="darkModeToggle">🌙</button>
+      <button class="btn btn-outline-danger ms-2" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <!-- Stats Section -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="stats-card">
+          <h4 id="totalReservations">0</h4>
+          <p>Total Reservations</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stats-card">
+          <h4 id="todayReservations">0</h4>
+          <p>Today's Reservations</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stats-card">
+          <h4 id="pendingReservations">0</h4>
+          <p>Pending</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stats-card">
+          <h4 id="confirmedReservations">0</h4>
+          <p>Confirmed</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filter-section">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-2">
+          <label for="filterDate" class="form-label">📅 Filter by Date</label>
+          <input type="date" id="filterDate" class="form-control" />
+        </div>
+        <div class="col-md-2">
+          <label for="filterStatus" class="form-label">📊 Filter by Status</label>
+          <select id="filterStatus" class="form-select">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="searchName" class="form-label">🔍 Search by Name</label>
+          <input type="text" id="searchName" class="form-control" placeholder="Enter name..." />
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100" onclick="loadReservations()">🔍 Filter</button>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-secondary w-100" onclick="clearFilters()">🔄 Clear</button>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-success w-100" onclick="exportReservations()">📊 Export</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reservations Table -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">📋 All Reservations</h5>
+        <div>
+          <span class="badge bg-primary" id="reservationCount">0 reservations</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead class="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Guests</th>
+                <th>Contact</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reservationTableBody">
+              <tr>
+                <td colspan="10" class="text-center">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reserved Table Viewer -->
+  <div class="container mb-5">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">🔎 View Reserved Tables</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label for="viewDate" class="form-label">🗓️ Select Date</label>
+            <input type="date" id="viewDate" class="form-control" />
+          </div>
+          <div class="col-md-3">
+            <label for="viewTime" class="form-label">⏰ Select Time</label>
+            <select id="viewTime" class="form-select">
+              <option disabled selected>Select Time</option>
+              <option>11:00</option><option>12:00</option><option>13:00</option>
+              <option>14:00</option><option>15:00</option><option>16:00</option>
+              <option>17:00</option><option>18:00</option><option>19:00</option>
+              <option>20:00</option><option>21:00</option><option>22:00</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="viewGuests" class="form-label">👥 Number of Guests</label>
+            <input type="number" id="viewGuests" class="form-control" placeholder="e.g. 3" min="1" max="20" />
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary w-100" onclick="viewReservedTables()">View Reserved Tables</button>
+          </div>
+        </div>
+        <div id="reservedTablesResult" class="mt-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Reservation Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Reservation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editForm">
+            <div class="mb-3">
+              <label for="editName" class="form-label">Name</label>
+              <input type="text" class="form-control" id="editName" required />
+            </div>
+            <div class="mb-3">
+              <label for="editEmail" class="form-label">Email</label>
+              <input type="email" class="form-control" id="editEmail" required />
+            </div>
+            <div class="mb-3">
+              <label for="editPhone" class="form-label">Phone</label>
+              <input type="tel" class="form-control" id="editPhone" required />
+            </div>
+            <div class="mb-3">
+              <label for="editDate" class="form-label">Date</label>
+              <input type="date" class="form-control" id="editDate" required />
+            </div>
+            <div class="mb-3">
+              <label for="editTime" class="form-label">Time</label>
+              <select class="form-select" id="editTime" required>
+                <option value="11:00">11:00</option><option value="12:00">12:00</option>
+                <option value="13:00">13:00</option><option value="14:00">14:00</option>
+                <option value="15:00">15:00</option><option value="16:00">16:00</option>
+                <option value="17:00">17:00</option><option value="18:00">18:00</option>
+                <option value="19:00">19:00</option><option value="20:00">20:00</option>
+                <option value="21:00">21:00</option><option value="22:00">22:00</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editGuests" class="form-label">Number of Guests</label>
+              <input type="number" class="form-control" id="editGuests" min="1" max="20" required />
+            </div>
+            <div class="mb-3">
+              <label for="editMessage" class="form-label">Special Requests</label>
+              <textarea class="form-control" id="editMessage" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="updateReservation()">Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const API_BASE = 'http://localhost:5000/api';
+    let currentReservations = [];
+    let currentEditingId = null;
+
+    // Check authentication on page load
+    window.addEventListener('load', () => {
+      const token = localStorage.getItem("bitcrave-admin-token");
+      if (!token) {
+        alert("❌ Please login as admin first!");
+        window.location.href = "login.html";
+        return;
+      }
+      
+      loadReservations();
+      loadStats();
+    });
+
+    // Load all reservations from API
+    async function loadReservations() {
+      const token = localStorage.getItem("bitcrave-admin-token");
+      const tbody = document.getElementById("reservationTableBody");
+      
+      // Show loading
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </td>
+        </tr>
+      `;
+
+      try {
+        // Get filter parameters
+        const filterDate = document.getElementById("filterDate").value;
+        const filterStatus = document.getElementById("filterStatus").value;
+        const searchName = document.getElementById("searchName").value;
+
+        let url = `${API_BASE}/reservations`;
+        
+        // Add filters to URL
+        const params = new URLSearchParams();
+        if (filterDate) params.append('date', filterDate);
+        if (filterStatus) params.append('status', filterStatus);
+        if (searchName) params.append('search', searchName);
+        
+        if (params.toString()) {
+          url += `?${params.toString()}`;
+        }
+
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        currentReservations = data.data || [];
+        
+        // Update count
+        document.getElementById("reservationCount").textContent = `${currentReservations.length} reservations`;
+        
+        // Render table
+        renderReservationsTable(currentReservations);
+        
+      } catch (error) {
+        console.error('Error loading reservations:', error);
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="10" class="text-center text-danger">
+              ❌ Error loading reservations: ${error.message}
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Render reservations table
+    function renderReservationsTable(reservations) {
+      const tbody = document.getElementById("reservationTableBody");
+      tbody.innerHTML = "";
+
+      if (reservations.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="10" class="text-center text-muted">
+              📭 No reservations found
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      reservations.forEach((reservation) => {
+        const row = document.createElement("tr");
+        
+        const statusBadge = getStatusBadge(reservation.status);
+        const createdDate = new Date(reservation.created_at).toLocaleString();
+        
+        // Format date properly - handle both string and Date object formats
+        let dateOnly = '';
+        if (reservation.date) {
+          if (typeof reservation.date === 'string') {
+            // If it's already a string in YYYY-MM-DD format
+            if (reservation.date.includes('T')) {
+              dateOnly = reservation.date.split('T')[0];
+            } else {
+              dateOnly = reservation.date;
+            }
+          } else {
+            // If it's a Date object
+            dateOnly = new Date(reservation.date).toISOString().split('T')[0];
+          }
+        }
+        
+        row.innerHTML = `
+          <td><strong>#${reservation.id}</strong></td>
+          <td>${reservation.name}</td>
+          <td>${dateOnly}</td>
+          <td>${reservation.time}</td>
+          <td>
+            <span class="badge bg-info">${reservation.people} guests</span>
+            ${reservation.table_number ? `<br><span class="badge bg-success">Table: ${reservation.table_number}</span>` : ''}
+            ${reservation.order_items ? `<br><span class="badge bg-warning text-dark">Has Order Items</span>` : ''}
+            ${reservation.payment_status === 'Paid' ? `<br><span class="badge bg-success">💰 Paid</span>` : reservation.payment_status === 'Pending' ? `<br><span class="badge bg-warning">⏳ Payment Pending</span>` : ''}
+          </td>
+          <td>
+            <div><strong>📧</strong> ${reservation.email}</div>
+            <div><strong>📞</strong> ${reservation.phone}</div>
+          </td>
+          <td>
+            ${reservation.message || '<em class="text-muted">No special requests</em>'}
+            ${reservation.feedback ? `<br><button class="btn btn-sm btn-info mt-1" onclick="viewFeedback(${reservation.id})">📝 View Feedback</button>` : ''}
+          </td>
+          <td>${statusBadge}</td>
+          <td><small>${createdDate}</small></td>
+          <td>
+            <div class="btn-group btn-group-sm" role="group">
+              <button class="btn btn-outline-primary" onclick="editReservation(${reservation.id})" title="Edit">
+                ✏️
+              </button>
+              ${reservation.status === 'Pending' ? `
+                <button class="btn btn-outline-success" onclick="confirmReservation(${reservation.id})" title="Confirm">
+                  ✅
+                </button>
+                <button class="btn btn-outline-warning" onclick="cancelReservation(${reservation.id})" title="Cancel">
+                  ❌
+                </button>
+              ` : ''}
+              <button class="btn btn-outline-danger" onclick="deleteReservation(${reservation.id})" title="Delete">
+                🗑️
+              </button>
+            </div>
+          </td>
+        `;
+
+        tbody.appendChild(row);
+      });
+    }
+
+    // Get status badge HTML
+    function getStatusBadge(status) {
+      const statusMap = {
+        'pending': { class: 'warning', text: '⏳ Pending' },
+        'confirmed': { class: 'success', text: '✅ Confirmed' },
+        'cancelled': { class: 'danger', text: '❌ Cancelled' }
+      };
+      
+      const statusInfo = statusMap[status] || { class: 'secondary', text: status };
+      return `<span class="badge bg-${statusInfo.class}">${statusInfo.text}</span>`;
+    }
+
+    // Load dashboard stats
+    async function loadStats() {
+      const token = localStorage.getItem("bitcrave-admin-token");
+      
+      try {
+        const response = await fetch(`${API_BASE}/reservations/stats/overview`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const stats = data.stats;
+          
+          document.getElementById("totalReservations").textContent = stats.total || 0;
+          document.getElementById("todayReservations").textContent = stats.today || 0;
+          document.getElementById("pendingReservations").textContent = stats.pending || 0;
+          document.getElementById("confirmedReservations").textContent = stats.confirmed || 0;
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // Edit reservation
+    async function editReservation(id) {
+      const reservation = currentReservations.find(r => r.id === id);
+      if (!reservation) return;
+
+      currentEditingId = id;
+      
+      // Populate form
+      document.getElementById("editName").value = reservation.name;
+      document.getElementById("editEmail").value = reservation.email;
+      document.getElementById("editPhone").value = reservation.phone;
+      // Format date for input field (YYYY-MM-DD) - handle different date formats
+      let editDate = '';
+      if (reservation.date) {
+        if (typeof reservation.date === 'string') {
+          // If it's already a string in YYYY-MM-DD format
+          if (reservation.date.includes('T')) {
+            editDate = reservation.date.split('T')[0];
+          } else {
+            editDate = reservation.date;
+          }
+        } else {
+          // If it's a Date object
+          editDate = new Date(reservation.date).toISOString().split('T')[0];
+        }
+      }
+      document.getElementById("editDate").value = editDate;
+      document.getElementById("editTime").value = reservation.time;
+      document.getElementById("editGuests").value = reservation.people;
+      document.getElementById("editMessage").value = reservation.message || '';
+
+      // Show modal
+      const modal = new bootstrap.Modal(document.getElementById('editModal'));
+      modal.show();
+    }
+
+    // Update reservation
+    async function updateReservation() {
+      if (!currentEditingId) return;
+
+      const token = localStorage.getItem("bitcrave-admin-token");
+      const formData = {
+        name: document.getElementById("editName").value,
+        email: document.getElementById("editEmail").value,
+        phone: document.getElementById("editPhone").value,
+        date: document.getElementById("editDate").value,
+        time: document.getElementById("editTime").value,
+        guests: parseInt(document.getElementById("editGuests").value),
+        message: document.getElementById("editMessage").value
+      };
+
+      try {
+        const response = await fetch(`${API_BASE}/reservations/${currentEditingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+          alert('✅ Reservation updated successfully!');
+          bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+          loadReservations();
+          loadStats();
+        } else {
+          const error = await response.json();
+          alert(`❌ Error: ${error.message}`);
+        }
+      } catch (error) {
+        console.error('Error updating reservation:', error);
+        alert('❌ Network error. Please try again.');
+      }
+    }
+
+    // Confirm reservation (simplified - table already assigned)
+    async function confirmReservation(id) {
+      const reservation = currentReservations.find(r => r.id === id);
+      if (!reservation) {
+        alert('❌ Reservation not found');
+        return;
+      }
+
+      // Show assigned table info
+      const tableInfo = reservation.table_number ? 
+        `Table ${reservation.table_number} has been automatically assigned.` : 
+        'No table assigned yet.';
+
+      if (!confirm(`✅ Confirm this reservation?\n\n${tableInfo}\n\nCustomer: ${reservation.name}\nDate: ${reservation.date}\nTime: ${reservation.time}\nGuests: ${reservation.people}`)) return;
+
+      const token = localStorage.getItem("bitcrave-admin-token");
+      
+      try {
+        const response = await fetch(`${API_BASE}/reservations/${id}/confirm`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({}) // No tableId needed since it's already assigned
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          
+          // Send confirmation email
+          await sendConfirmationEmail(reservation);
+          
+          alert(`✅ Reservation confirmed successfully!\n\nTable ${reservation.table_number || 'Auto-assigned'} is ready for ${reservation.name}.\n\n📧 Confirmation email sent to ${reservation.email}`);
+          loadReservations();
+          loadStats();
+        } else {
+          const error = await response.json();
+          alert(`❌ Error: ${error.message}`);
+        }
+      } catch (error) {
+        console.error('Error confirming reservation:', error);
+        alert('❌ Network error. Please try again.');
+      }
+    }
+
+    // Send confirmation email function
+    async function sendConfirmationEmail(reservation) {
+      try {
+        const templateParams = {
+          to_email: reservation.email,
+          to_name: reservation.name,
+          reservation_id: reservation.id,
+          table_number: reservation.table_number || 'Auto-assigned',
+          reservation_date: new Date(reservation.date).toLocaleDateString(),
+          reservation_time: reservation.time,
+          number_of_guests: reservation.people,
+          restaurant_name: 'BitCrave Restaurant',
+          restaurant_address: '123 Main Street, City, State 12345',
+          restaurant_phone: '+1 (555) 123-4567'
+        };
+
+        const response = await emailjs.send(
+          'service_xj1e9a6', // Your EmailJS service ID
+          'template_5sn3aqi', // Your EmailJS template ID
+          templateParams
+        );
+
+        console.log('✅ Confirmation email sent successfully:', response);
+      } catch (error) {
+        console.error('❌ Error sending confirmation email:', error);
+        // Don't show error to user as the reservation was still confirmed
+      }
+    }
+
+    // Cancel reservation
+    async function cancelReservation(id) {
+      if (!confirm('❌ Are you sure you want to cancel this reservation?')) return;
+
+      const token = localStorage.getItem("bitcrave-admin-token");
+      
+      try {
+        const response = await fetch(`${API_BASE}/reservations/${id}/cancel`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          alert('✅ Reservation cancelled successfully!');
+          loadReservations();
+          loadStats();
+        } else {
+          const error = await response.json();
+          alert(`❌ Error: ${error.message}`);
+        }
+      } catch (error) {
+        console.error('Error cancelling reservation:', error);
+        alert('❌ Network error. Please try again.');
+      }
+    }
+
+    // Delete reservation
+    async function deleteReservation(id) {
+      if (!confirm('🗑️ Are you sure you want to delete this reservation?')) return;
+
+      const token = localStorage.getItem("bitcrave-admin-token");
+      
+      try {
+        const response = await fetch(`${API_BASE}/reservations/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          alert('✅ Reservation deleted successfully!');
+          loadReservations();
+          loadStats();
+        } else {
+          const error = await response.json();
+          alert(`❌ Error: ${error.message}`);
+        }
+      } catch (error) {
+        console.error('Error deleting reservation:', error);
+        alert('❌ Network error. Please try again.');
+      }
+    }
+
+    // Clear filters
+    function clearFilters() {
+      document.getElementById("filterDate").value = "";
+      document.getElementById("filterStatus").value = "";
+      document.getElementById("searchName").value = "";
+      loadReservations();
+    }
+
+    // Export reservations
+    function exportReservations() {
+      const csvContent = "data:text/csv;charset=utf-8," 
+        + "ID,Name,Email,Phone,Date,Time,Guests,Message,Status,Created\n"
+        + currentReservations.map(r => 
+          `${r.id},"${r.name}","${r.email}","${r.phone}","${r.date}","${r.time}","${r.people}","${r.message || ''}","${r.status}","${r.created_at}"`
+        ).join("\n");
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `reservations_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // View reserved tables (simplified version)
+    function viewReservedTables() {
+      const date = document.getElementById("viewDate").value;
+      const time = document.getElementById("viewTime").value;
+      const guests = parseInt(document.getElementById("viewGuests").value);
+      const reservedDiv = document.getElementById("reservedTablesResult");
+
+      if (!date || !time || isNaN(guests)) {
+        return reservedDiv.innerHTML = `<p class="text-danger">❌ Please select date, time, and guest count.</p>`;
+      }
+
+      // Filter reservations for the selected date and time
+      const bookedReservations = currentReservations.filter(r => 
+        r.date === date && r.time === time && r.status === 'confirmed'
+      );
+
+      const bookedCount = bookedReservations.length;
+      const maxCapacity = 5; // Max 5 reservations per time slot
+      const available = maxCapacity - bookedCount;
+
+      reservedDiv.innerHTML = `
+        <div class="alert alert-info">
+          <h6>📊 Availability for ${date} at ${time}</h6>
+          <p><strong>Booked:</strong> ${bookedCount} reservations</p>
+          <p><strong>Available:</strong> ${available} slots</p>
+          <p><strong>Capacity:</strong> ${maxCapacity} max reservations per time slot</p>
+        </div>
+        ${bookedReservations.length > 0 ? `
+          <div class="mt-3">
+            <h6>📋 Booked Reservations:</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr><th>Name</th><th>Guests</th><th>Contact</th></tr>
+                </thead>
+                <tbody>
+                  ${bookedReservations.map(r => `
+                    <tr>
+                      <td>${r.name}</td>
+                      <td>${r.people} guests</td>
+                      <td>${r.phone}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ` : '<p class="text-muted">No reservations for this time slot.</p>'}
+      `;
+    }
+
+    // View feedback function
+    function viewFeedback(reservationId) {
+      const reservation = currentReservations.find(r => r.id === reservationId);
+      if (!reservation || !reservation.feedback) return;
+      
+      try {
+        const feedback = JSON.parse(reservation.feedback);
+        const feedbackHtml = `
+          <div class="modal fade" id="feedbackModal" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">📝 Feedback for Reservation #${reservationId}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <h6>Service Rating:</h6>
+                      <div class="text-warning">
+                        ${'★'.repeat(feedback.service || 0)}${'☆'.repeat(5 - (feedback.service || 0))}
+                        <span class="ms-2">(${feedback.service || 0}/5)</span>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <h6>Food Rating:</h6>
+                      <div class="text-warning">
+                        ${'★'.repeat(feedback.food || 0)}${'☆'.repeat(5 - (feedback.food || 0))}
+                        <span class="ms-2">(${feedback.food || 0}/5)</span>
+                      </div>
+                    </div>
+                  </div>
+                  ${feedback.message ? `
+                    <div class="mt-3">
+                      <h6>Message:</h6>
+                      <p class="text-muted">${feedback.message}</p>
+                    </div>
+                  ` : ''}
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('feedbackModal');
+        if (existingModal) {
+          existingModal.remove();
+        }
+        
+        // Add new modal to body
+        document.body.insertAdjacentHTML('beforeend', feedbackHtml);
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('feedbackModal')).show();
+        
+        // Remove modal from DOM after it's hidden
+        document.getElementById('feedbackModal').addEventListener('hidden.bs.modal', function() {
+          this.remove();
+        });
+        
+      } catch (error) {
+        console.error('Error parsing feedback:', error);
+        alert('❌ Error displaying feedback');
+      }
+    }
+
+    // Logout function
+    function logout() {
+      localStorage.removeItem("bitcrave-admin-token");
+      localStorage.removeItem("bitcrave-admin-auth");
+      localStorage.removeItem("bitcrave-admin-user");
+      window.location.href = "login.html";
+    }
+
+    // Initialize EmailJS
+    emailjs.init("ci-JHDWo1WGRSl8OP");
+
+    // Dark mode toggle
+    if (localStorage.getItem("bitcrave-theme") === "dark") {
+      document.body.classList.add("dark-mode");
+      document.querySelectorAll('.table').forEach(el => el.classList.add('dark-mode'));
+    }
+
+    document.getElementById("darkModeToggle").addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      document.querySelectorAll('.table').forEach(el => el.classList.toggle('dark-mode'));
+      localStorage.setItem("bitcrave-theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+    });
+
+    // Add filter event listeners
+    document.getElementById("filterDate").addEventListener("change", loadReservations);
+    document.getElementById("filterStatus").addEventListener("change", loadReservations);
+    document.getElementById("searchName").addEventListener("input", (e) => {
+      // Add debounce for search
+      clearTimeout(window.searchTimeout);
+      window.searchTimeout = setTimeout(loadReservations, 500);
+    });
+  </script>
+
+</body>
+</html>

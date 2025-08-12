@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin – Manage Events</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .card-preview img {
+      height: 200px;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="fw-bold">Admin – Manage Events</h2>
+      <button id="logoutBtn" class="btn btn-outline-danger btn-sm" onclick="logoutUser()">Logout</button>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <!-- Event Form -->
+    <form id="eventForm" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Event Title</label>
+        <input type="text" id="title" class="form-control" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Date</label>
+        <input type="date" id="date" class="form-control" required>
+      </div>
+      <div class="col-md-12">
+        <label class="form-label">Description</label>
+        <textarea id="desc" rows="2" class="form-control"></textarea>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Image URL</label>
+        <input type="url" id="image" class="form-control" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Badge Text</label>
+        <input type="text" id="badge" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Badge Color</label>
+        <select id="badgeColor" class="form-select">
+          <option value="warning">Warning</option>
+          <option value="danger">Danger</option>
+          <option value="success">Success</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
+      <div class="col-md-1">
+        <label class="form-label">Icon</label>
+        <input type="text" id="icon" class="form-control" placeholder="fa-star">
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Add Event</button>
+        <button type="button" class="btn btn-secondary ms-2" onclick="downloadEvents()">Download Events</button>
+      </div>
+    </form>
+
+    <!-- Live Preview -->
+    <h4 class="mt-5">Live Preview</h4>
+    <div class="card mt-3 shadow-sm card-preview">
+      <div class="position-relative">
+        <img id="previewImage" src="" class="card-img-top" alt="Preview">
+        <span id="previewBadge" class="badge bg-warning position-absolute top-0 start-0 m-2 px-3 py-2 fs-6 shadow-sm" style="border-radius:0 10px 10px 0;">Badge</span>
+        <span id="previewDate" class="position-absolute bottom-0 end-0 m-2 bg-dark text-white px-2 py-1 rounded-pill small opacity-75">Date</span>
+      </div>
+      <div class="card-body">
+        <h5 class="card-title fw-bold" id="previewTitle">Title</h5>
+        <p class="card-text" id="previewDesc">Description</p>
+      </div>
+    </div>
+
+    <!-- Saved Events -->
+    <h4 class="mt-5">Saved Events</h4>
+    <div id="eventList" class="row row-cols-1 row-cols-md-2 g-4 mt-2"></div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    const API_BASE = 'http://localhost:5000/api';
+    let events = [];
+
+    // Check authentication
+    function checkAuth() {
+      const token = localStorage.getItem("bitcrave-admin-token");
+      if (!token) {
+        window.location.href = "login.html";
+        return false;
+      }
+      return true;
+    }
+
+    // Load events from backend
+    async function loadEvents() {
+      try {
+        const token = localStorage.getItem("bitcrave-admin-token");
+        const response = await fetch(`${API_BASE}/events`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch events');
+        }
+        
+        const data = await response.json();
+        events = data.data || [];
+        displayEvents();
+      } catch (error) {
+        console.error('Error loading events:', error);
+        showAlert('Failed to load events', 'danger');
+      }
+    }
+
+    const title = document.getElementById("title");
+    const date = document.getElementById("date");
+    const desc = document.getElementById("desc");
+    const image = document.getElementById("image");
+    const badge = document.getElementById("badge");
+    const badgeColor = document.getElementById("badgeColor");
+    const icon = document.getElementById("icon");
+
+    const previewTitle = document.getElementById("previewTitle");
+    const previewDesc = document.getElementById("previewDesc");
+    const previewDate = document.getElementById("previewDate");
+    const previewImage = document.getElementById("previewImage");
+    const previewBadge = document.getElementById("previewBadge");
+
+    [title, desc, date, image, badge, badgeColor, icon].forEach(input => {
+      input.addEventListener("input", updatePreview);
+    });
+
+    function updatePreview() {
+      previewTitle.innerText = title.value || "Title";
+      previewDesc.innerText = desc.value || "Description";
+      previewDate.innerText = date.value || "Date";
+      previewImage.src = image.value || "";
+      previewBadge.innerHTML = `<i class='fas ${icon.value || "fa-star"} me-1'></i>${badge.value || "Badge"}`;
+      previewBadge.className = `badge bg-${badgeColor.value || "warning"} position-absolute top-0 start-0 m-2 px-3 py-2 fs-6 shadow-sm`;
+    }
+
+    function resetPreview() {
+      previewTitle.innerText = "Title";
+      previewDesc.innerText = "Description";
+      previewDate.innerText = "Date";
+      previewImage.src = "";
+      previewBadge.innerHTML = "Badge";
+      previewBadge.className = "badge bg-warning position-absolute top-0 start-0 m-2 px-3 py-2 fs-6 shadow-sm";
+    }
+
+    document.getElementById("eventForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      if (!title.value || !date.value || !image.value) {
+        return showAlert("Please fill in all required fields.", "danger");
+      }
+
+      try {
+        const token = localStorage.getItem("bitcrave-admin-token");
+        const response = await fetch(`${API_BASE}/events`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            title: title.value,
+            description: desc.value,
+            date: date.value,
+            image_url: image.value,
+            location: badge.value
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to add event');
+        }
+        
+        showAlert("✅ Event added successfully!", "success");
+        await loadEvents();
+        this.reset();
+        resetPreview();
+      } catch (error) {
+        console.error('Error adding event:', error);
+        showAlert(error.message || 'Failed to add event', 'danger');
+      }
+    });
+
+    function displayEvents() {
+      const list = document.getElementById("eventList");
+
+      if (events.length === 0) {
+        list.innerHTML = "<p class='text-muted'>No events added yet.</p>";
+        return;
+      }
+
+      list.innerHTML = events.map((ev) => `
+        <div class="col">
+          <div class="card h-100">
+            <img src="${ev.image_url}" class="card-img-top" style="height:180px;object-fit:cover">
+            <div class="card-body">
+              <h5 class="card-title">${ev.title}</h5>
+              <p class="card-text">${ev.description}</p>
+              <span class="badge bg-warning"><i class="fas fa-star me-1"></i>${ev.location}</span>
+              <p class="text-muted small mt-2">${ev.date}</p>
+              <button class="btn btn-sm btn-danger mt-2" onclick="deleteEvent(${ev.id})">Delete</button>
+            </div>
+          </div>
+        </div>`).join("");
+    }
+
+    async function deleteEvent(eventId) {
+      if (!confirm("Are you sure you want to delete this event?")) return;
+
+      try {
+        const token = localStorage.getItem("bitcrave-admin-token");
+        const response = await fetch(`${API_BASE}/events/${eventId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete event');
+        }
+        
+        showAlert("❌ Event deleted.", "warning");
+        await loadEvents();
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        showAlert('Failed to delete event', 'danger');
+      }
+    }
+
+    function showAlert(message, type) {
+      const alertBox = document.getElementById("alertBox");
+      alertBox.innerHTML = `<div class='alert alert-${type} alert-dismissible fade show' role='alert'>
+        ${message}
+        <button type='button' class='btn-close' data-bs-dismiss='alert'></button>
+      </div>`;
+    }
+
+    function downloadEvents() {
+      const eventsData = JSON.stringify(events, null, 2);
+      const blob = new Blob([eventsData], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "bitcrave-events.json";
+      a.click();
+    }
+
+    function logoutUser() {
+      // Get the admin token from sessionStorage or localStorage
+      const token = sessionStorage.getItem("bitcrave-admin-token") || localStorage.getItem("bitcrave-admin-token");
+      
+      if (!token) {
+        // If no token, just clear local data and redirect
+        sessionStorage.removeItem("bitcrave-admin");
+        localStorage.removeItem("bitcrave-admin-token");
+        window.location.href = "login.html";
+        return;
+      }
+
+      fetch("http://localhost:5000/api/admin/logout", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+      })
+      .then(res => res.json())
+      .then(data => {
+          console.log("Admin logout response:", data);
+          // Clear all stored data
+          sessionStorage.removeItem("bitcrave-admin");
+          sessionStorage.removeItem("bitcrave-admin-token");
+          localStorage.removeItem("bitcrave-admin-token");
+          // Redirect to admin login page
+          window.location.href = "login.html";
+      })
+      .catch(err => {
+          console.error("Admin logout error:", err);
+          // Even if logout fails, clear local data and redirect
+          sessionStorage.removeItem("bitcrave-admin");
+          sessionStorage.removeItem("bitcrave-admin-token");
+          localStorage.removeItem("bitcrave-admin-token");
+          window.location.href = "login.html";
+      });
+    }
+
+    // Load existing
+    window.onload = async function() {
+      if (!checkAuth()) return;
+      await loadEvents();
+    };
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

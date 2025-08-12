@@ -1,0 +1,42 @@
+<!-- my-booking.html -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Reservations | BitCrave</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-100 p-6">
+  <h2 class="text-3xl font-bold text-center mb-6">🗓️ My Reservations</h2>
+  <div id="bookingList" class="space-y-4 max-w-3xl mx-auto"></div>
+
+  <script>
+    const user = JSON.parse(sessionStorage.getItem("loggedInUser"));
+    if (!user) {
+      alert("Please log in to view your bookings.");
+      window.location.href = "login.html";
+    }
+
+    const reservations = JSON.parse(localStorage.getItem("bitcrave-reservations")) || [];
+    const userReservations = reservations.filter(r => r.email === user.email);
+    const container = document.getElementById("bookingList");
+
+    if (userReservations.length === 0) {
+      container.innerHTML = "<p class='text-center'>You have no bookings yet.</p>";
+    } else {
+      userReservations.forEach(r => {
+        const div = document.createElement("div");
+        div.className = "p-4 rounded bg-gray-200 dark:bg-gray-800";
+        div.innerHTML = `
+          <p><strong>Date:</strong> ${r.date} &nbsp; <strong>Time:</strong> ${r.time}</p>
+          <p><strong>Guests:</strong> ${r.guests}</p>
+          <p><strong>Status:</strong> <span class="font-semibold">${r.status}</span></p>
+          <p><strong>Order:</strong> ${r.order.join(", ")}</p>
+        `;
+        container.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>

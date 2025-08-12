@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Bookings | BitCrave</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h2 class="mb-4">My Bookings</h2>
+    <div id="bookingList"></div>
+  </div>
+
+  <!-- Razorpay Script -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <script>
+    const bookings = JSON.parse(localStorage.getItem("bitcrave-reservations")) || [];
+    const menu = JSON.parse(localStorage.getItem("bitcrave-menu")) || [];
+    const email = localStorage.getItem("bitcrave-user-email");
+    const container = document.getElementById("bookingList");
+
+    const userBookings = bookings.filter(b => b.email === email);
+
+    function calculateTotal(order = []) {
+      return order.reduce((sum, item) => {
+        const dish = menu.find(m => m.name === item.name);
+        return sum + ((dish?.price || 0) * item.quantity);
+      }, 0);
+    }
+
+    function render() {
+      if (userBookings.length === 0) {
+        container.innerHTML = `<div class="alert alert-info">No bookings found for your email.</div>`;
+        return;
+      }
+
+      container.innerHTML = userBookings.map((b, i) => {
+        const total = calculateTotal(b.order || []);
+        const orderList = (b.order || []).map(o => `${o.name} x${o.quantity}`).join(', ') || "None";
+        return `
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5>Booking #${i + 1}</h5>
+              <p><strong>Date:</strong> ${b.date} | <strong>Time:</strong> ${b.time}</p>
+              <p><strong>Guests:</strong> ${b.guests}</p>
+              <p><strong>Table No:</strong> ${b.tableNumber
+ || '-'}</p>
+              <p><strong>Status:</strong> <span class="badge bg-${b.status === 'Confirmed' ? 'success' : 'warning'}">${b.status}</span></p>
+              <p><strong>Order:</strong> ${orderList}</p>
+              <p><strong>Total:</strong> ₹${total}</p>
+              <p><strong>Payment:</strong> <span class="badge bg-${b.paymentStatus === 'Paid' ? 'success' : 'warning'}">${b.paymentStatus || 'Pending'}</span></p>
+              ${b.status === 'Confirmed' && b.paymentStatus !== 'Paid' && total > 0 ? `
+                <button class="btn btn-primary" onclick="pay(${i})">Pay with Razorpay</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function pay(index) {
+      const booking = userBookings[index];
+      const total = calculateTotal(booking.order || []);
+
+      const options = {
+        key: "rzp_test_Hog4lqhvyUVYdA", // ✅ Replace with your Razorpay Test Key
+        amount: total * 100,
+        currency: "INR",
+        name: "BitCrave",
+        description: "Table Booking Payment",
+        handler: function (response) {
+          const all = JSON.parse(localStorage.getItem("bitcrave-reservations")) || [];
+          const originalIndex = all.findIndex(b => b.email === booking.email && b.date === booking.date && b.time === booking.time);
+
+          if (originalIndex !== -1) {
+            all[originalIndex].paymentStatus = "Paid";
+            localStorage.setItem("bitcrave-reservations", JSON.stringify(all));
+
+            const payments = JSON.parse(localStorage.getItem("bitcrave-payments")) || [];
+            payments.push({
+              paymentId: response.razorpay_payment_id,
+              email: booking.email,
+              amount: total,
+              date: booking.date,
+              time: booking.time,
+              bookingId: originalIndex + 1,
+              createdAt: new Date().toISOString()
+            });
+            localStorage.setItem("bitcrave-payments", JSON.stringify(payments));
+
+            localStorage.setItem("bitcrave-payment-success", JSON.stringify({
+              paymentId: response.razorpay_payment_id,
+              amount: total,
+              date: booking.date,
+              time: booking.time
+            }));
+
+            window.location.href = "payment-success.html";
+          }
+        },
+        prefill: {
+          name: booking.name,
+          email: booking.email,
+          contact: booking.phone
+        },
+        theme: {
+          color: "#3399cc"
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+    }
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BitCrave | Reservations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    * { font-family: 'Poppins', sans-serif; }
+    
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      position: relative;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80') center/cover;
+      opacity: 0.1;
+      z-index: -1;
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+    }
+    
+    .floating {
+      animation: floating 3s ease-in-out infinite;
+    }
+    
+    @keyframes floating {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .form-input {
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid rgba(102, 126, 234, 0.1);
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    .form-input:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      transform: translateY(-1px);
+    }
+    
+    .reservation-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .reservation-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-confirmed { background: #d1fae5; color: #065f46; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="text-gray-800">
+  <!-- Navigation -->
+  <nav class="glass-card sticky top-0 z-50 px-6 py-4 mb-8">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <a href="index.html" class="text-2xl font-bold gradient-text flex items-center">
+        <i class="fas fa-utensils mr-2"></i>BitCrave
+      </a>
+      <div class="flex items-center space-x-6">
+        <a href="index.html" class="hover:text-purple-600 transition-colors">Home</a>
+        <a href="menu.html" class="hover:text-purple-600 transition-colors">Menu</a>
+        <a href="reservations.html" class="text-purple-600 font-semibold">Reservations</a>
+        <button onclick="logoutUser()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+          <i class="fas fa-sign-out-alt mr-2"></i>Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <div class="text-center mb-12">
+    <h1 class="text-5xl font-bold text-white mb-4 floating">
+      <i class="fas fa-calendar-check mr-4"></i>Reserve Your Table
+    </h1>
+    <p class="text-xl text-white/90 max-w-2xl mx-auto">
+      Experience the perfect blend of luxury dining and exceptional service. 
+      Book your table today and create unforgettable memories.
+    </p>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6">
+    <!-- Main Content Grid -->
+    <div class="grid lg:grid-cols-3 gap-8">
+      
+      <!-- Reservation Form -->
+      <div class="lg:col-span-2">
+        <div class="glass-card rounded-2xl p-8 fade-in">
+          <div class="flex items-center mb-6">
+            <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-4">
+              <i class="fas fa-calendar-plus text-white text-xl"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold gradient-text">Book Your Table</h2>
+              <p class="text-gray-600">Fill in the details below to secure your reservation</p>
+            </div>
+          </div>
+
+          <form id="reservationForm" class="space-y-6">
+            <!-- Personal Information -->
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-user mr-2"></i>Full Name
+                </label>
+                <input type="text" id="name" required 
+                       class="form-input w-full px-4 py-3 rounded-xl">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-phone mr-2"></i>Phone Number
+                </label>
+                <input type="tel" id="phone" required 
+                       class="form-input w-full px-4 py-3 rounded-xl">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-envelope mr-2"></i>Email Address
+              </label>
+              <input type="email" id="email" required 
+                     class="form-input w-full px-4 py-3 rounded-xl">
+            </div>
+
+            <!-- Reservation Details -->
+            <div class="grid md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-calendar mr-2"></i>Date
+                </label>
+                <input type="date" id="date" required 
+                       class="form-input w-full px-4 py-3 rounded-xl">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-clock mr-2"></i>Time
+                </label>
+                <select id="time" required class="form-input w-full px-4 py-3 rounded-xl">
+                  <option value="">Select Time</option>
+                  <option value="12:00">12:00 PM</option>
+                  <option value="13:00">1:00 PM</option>
+                  <option value="14:00">2:00 PM</option>
+                  <option value="18:00">6:00 PM</option>
+                  <option value="19:00">7:00 PM</option>
+                  <option value="20:00">8:00 PM</option>
+                  <option value="21:00">9:00 PM</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-users mr-2"></i>Guests
+                </label>
+                <select id="guests" required class="form-input w-full px-4 py-3 rounded-xl">
+                  <option value="">Select Guests</option>
+                  <option value="1">1 Person</option>
+                  <option value="2">2 People</option>
+                  <option value="3">3 People</option>
+                  <option value="4">4 People</option>
+                  <option value="5">5 People</option>
+                  <option value="6">6 People</option>
+                  <option value="7">7 People</option>
+                  <option value="8">8 People</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Availability Status -->
+            <div id="availabilityStatus"></div>
+
+            <!-- Table Selection -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-chair mr-2"></i>Select Table
+              </label>
+              <select id="tableNumber" required class="form-input w-full px-4 py-3 rounded-xl">
+                <option value="">Loading available tables...</option>
+              </select>
+            </div>
+
+                         <!-- Menu Selection -->
+             <div>
+               <label class="block text-sm font-medium text-gray-700 mb-2">
+                 <i class="fas fa-utensils mr-2"></i>Pre-order Menu Items
+               </label>
+               <div id="menuItemsContainer" class="space-y-3">
+                 <div class="menu-item-row flex gap-3">
+                   <select class="menu-item-select form-input flex-1 px-4 py-3 rounded-xl">
+                     <option value="">Select Menu Item</option>
+                   </select>
+                   <input type="number" class="menu-item-quantity form-input w-20 px-3 py-3 rounded-xl text-center" 
+                          placeholder="Qty" min="1" max="10" value="1">
+                   <button type="button" class="remove-menu-item bg-red-500 text-white px-3 py-3 rounded-xl hover:bg-red-600 transition-colors" 
+                           style="display: none;">
+                     <i class="fas fa-trash"></i>
+                   </button>
+                 </div>
+               </div>
+               <button type="button" id="addMenuItem" class="mt-2 text-purple-600 hover:text-purple-700 text-sm font-medium">
+                 <i class="fas fa-plus mr-1"></i>Add Another Item
+               </button>
+             </div>
+
+            <!-- Special Requests -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-comment mr-2"></i>Special Requests
+              </label>
+              <textarea id="specialRequests" rows="3" 
+                        placeholder="Any special requests or dietary requirements..."
+                        class="form-input w-full px-4 py-3 rounded-xl resize-none"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-primary w-full py-4 rounded-xl text-white font-semibold text-lg">
+              <i class="fas fa-check mr-2"></i>Confirm Reservation
+            </button>
+          </form>
+
+          <!-- Message Display -->
+          <div id="formMessage" class="mt-6 text-center"></div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="space-y-6">
+        <!-- Quick Stats -->
+        <div class="glass-card rounded-2xl p-6">
+          <h3 class="text-lg font-semibold mb-4 gradient-text">
+            <i class="fas fa-chart-bar mr-2"></i>Quick Stats
+          </h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Total Reservations</span>
+              <span id="totalReservations" class="font-semibold text-purple-600">0</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Confirmed</span>
+              <span id="confirmedReservations" class="font-semibold text-green-600">0</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Pending</span>
+              <span id="pendingReservations" class="font-semibold text-yellow-600">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Restaurant Info -->
+        <div class="glass-card rounded-2xl p-6">
+          <h3 class="text-lg font-semibold mb-4 gradient-text">
+            <i class="fas fa-info-circle mr-2"></i>Restaurant Info
+          </h3>
+          <div class="space-y-3 text-sm">
+            <div class="flex items-center">
+              <i class="fas fa-clock text-purple-500 mr-3"></i>
+              <span>Open: 12:00 PM - 11:00 PM</span>
+            </div>
+            <div class="flex items-center">
+              <i class="fas fa-phone text-purple-500 mr-3"></i>
+              <span>+91 98765 43210</span>
+            </div>
+            <div class="flex items-center">
+              <i class="fas fa-map-marker-alt text-purple-500 mr-3"></i>
+              <span>123 Food Street, City</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Reservations Section -->
+    <div class="mt-12">
+      <div class="glass-card rounded-2xl p-8 fade-in">
+        <div class="flex items-center mb-6">
+          <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mr-4">
+            <i class="fas fa-list-alt text-white text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold gradient-text">My Reservations</h2>
+            <p class="text-gray-600">View and manage your current bookings</p>
+          </div>
+        </div>
+
+        <div id="myReservations" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Reservations will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API_BASE = 'http://localhost:5000/api';
+const token = sessionStorage.getItem('bitcrave-token');
+
+// Check authentication
+if (!token) {
+  window.location.href = 'login.html';
+}
+
+// Load user data
+function loadUserData() {
+  const user = JSON.parse(sessionStorage.getItem('bitcrave-user'));
+  if (user) {
+    document.getElementById('name').value = user.name || '';
+    document.getElementById('email').value = user.email || '';
+    document.getElementById('phone').value = user.phone || '';
+  }
+}
+
+// Set minimum date
+function setMinDate() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('date').min = today;
+}
+
+// Load available tables
+async function loadTables() {
+  const date = document.getElementById('date').value;
+  const time = document.getElementById('time').value;
+  const guests = document.getElementById('guests').value;
+  
+  // Don't load tables if required fields are not filled
+  if (!date || !time || !guests) {
+    const tableSelect = document.getElementById('tableNumber');
+    tableSelect.innerHTML = '<option value="">Please select date, time, and guests first</option>';
+    return;
+  }
+  
+  try {
+    const url = `${API_BASE}/reservations/tables/available?date=${date}&time=${time}&people=${guests}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const tables = data.data || [];
+    const tableSelect = document.getElementById('tableNumber');
+    
+    tableSelect.innerHTML = '<option value="">Select Available Table</option>';
+    
+    if (tables.length === 0) {
+      tableSelect.innerHTML = '<option value="" disabled>No tables available for this time/date</option>';
+    } else {
+      tables.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = `Table ${t.table_number} - ${t.capacity} seats`;
+        tableSelect.appendChild(opt);
+      });
+    }
+  } catch (err) {
+    console.error('Error loading tables:', err);
+    const tableSelect = document.getElementById('tableNumber');
+    tableSelect.innerHTML = '<option value="" disabled>Error loading tables</option>';
+  }
+}
+
+// Load menu
+async function loadMenu() {
+  try {
+    const res = await fetch(`${API_BASE}/menu`);
+    const data = await res.json();
+    const menu = data.menu || [];
+    
+    // Populate all menu selects
+    const menuSelects = document.querySelectorAll('.menu-item-select');
+    menuSelects.forEach(select => {
+      select.innerHTML = '<option value="">Select Menu Item</option>';
+      menu.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = `${item.name} - ₹${item.price}`;
+        select.appendChild(opt);
+      });
+    });
+  } catch (err) {
+    console.error('Error loading menu:', err);
+  }
+}
+
+// Add menu item row
+function addMenuItemRow() {
+  const container = document.getElementById('menuItemsContainer');
+  const newRow = document.createElement('div');
+  newRow.className = 'menu-item-row flex gap-3';
+  
+  // Get menu options from first select
+  const firstSelect = document.querySelector('.menu-item-select');
+  const menuOptions = firstSelect.innerHTML;
+  
+  newRow.innerHTML = `
+    <select class="menu-item-select form-input flex-1 px-4 py-3 rounded-xl">
+      ${menuOptions}
+    </select>
+    <input type="number" class="menu-item-quantity form-input w-20 px-3 py-3 rounded-xl text-center" 
+           placeholder="Qty" min="1" max="10" value="1">
+    <button type="button" class="remove-menu-item bg-red-500 text-white px-3 py-3 rounded-xl hover:bg-red-600 transition-colors">
+      <i class="fas fa-trash"></i>
+    </button>
+  `;
+  
+  container.appendChild(newRow);
+  
+  // Show remove buttons if more than one row
+  const removeButtons = document.querySelectorAll('.remove-menu-item');
+  removeButtons.forEach(btn => btn.style.display = 'block');
+}
+
+// Remove menu item row
+function removeMenuItemRow(button) {
+  const row = button.closest('.menu-item-row');
+  row.remove();
+  
+  // Hide remove button if only one row left
+  const removeButtons = document.querySelectorAll('.remove-menu-item');
+  if (removeButtons.length === 1) {
+    removeButtons[0].style.display = 'none';
+  }
+}
+
+// Check table availability in real-time
+async function checkAvailability() {
+  const date = document.getElementById('date').value;
+  const time = document.getElementById('time').value;
+  const people = document.getElementById('guests').value;
+  
+  if (!date || !time || !people) {
+    document.getElementById('availabilityStatus').innerHTML = '';
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_BASE}/reservations/check-availability?date=${date}&time=${time}&people=${people}`);
+    const data = await res.json();
+    
+    const statusDiv = document.getElementById('availabilityStatus');
+    
+    if (data.available) {
+      statusDiv.innerHTML = `
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+          <i class="fas fa-check-circle mr-2"></i>
+          ${data.message} (${data.totalAvailable} table${data.totalAvailable > 1 ? 's' : ''} available)
+        </div>
+      `;
+    } else {
+      statusDiv.innerHTML = `
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+          <i class="fas fa-times-circle mr-2"></i>
+          ${data.message}
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.error('Error checking availability:', err);
+    document.getElementById('availabilityStatus').innerHTML = `
+      <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        Error checking availability. Please try again.
+      </div>
+    `;
+  }
+}
+
+// Load reservations
+async function loadMyReservations() {
+  try {
+    const user = JSON.parse(sessionStorage.getItem('bitcrave-user'));
+    if (!user || !user.email) {
+      console.error('No user email found');
+      return;
+    }
+    
+    const res = await fetch(`${API_BASE}/reservations/user?email=${encodeURIComponent(user.email)}`);
+    const data = await res.json();
+    const reservations = data.data || [];
+    const container = document.getElementById('myReservations');
+    
+    // Update stats
+    document.getElementById('totalReservations').textContent = reservations.length;
+    document.getElementById('confirmedReservations').textContent = 
+      reservations.filter(r => r.status === 'Confirmed').length;
+    document.getElementById('pendingReservations').textContent = 
+      reservations.filter(r => r.status === 'Pending').length;
+    
+    container.innerHTML = '';
+    
+    if (reservations.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full text-center py-12">
+          <i class="fas fa-calendar-times text-6xl text-gray-300 mb-4"></i>
+          <p class="text-gray-500 text-lg">No reservations yet</p>
+          <p class="text-gray-400">Make your first reservation above!</p>
+        </div>
+      `;
+    } else {
+      reservations.forEach(r => {
+        const statusClass = r.status === 'Confirmed' ? 'status-confirmed' : 
+                           r.status === 'Cancelled' ? 'status-cancelled' : 'status-pending';
+        
+        const div = document.createElement('div');
+        div.className = 'reservation-card rounded-xl p-6 fade-in';
+        div.innerHTML = `
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="font-semibold text-lg">${r.name}</h3>
+            <span class="status-badge ${statusClass}">${r.status}</span>
+          </div>
+          <div class="space-y-2 text-sm text-gray-600">
+            <div class="flex items-center">
+              <i class="fas fa-calendar text-purple-500 mr-2"></i>
+              <span>${r.date} at ${r.time}</span>
+            </div>
+            <div class="flex items-center">
+              <i class="fas fa-users text-purple-500 mr-2"></i>
+              <span>${r.people} guests</span>
+            </div>
+            <div class="flex items-center">
+              <i class="fas fa-chair text-purple-500 mr-2"></i>
+              <span>Table ${r.table_id || 'TBD'}</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+  } catch (err) {
+    console.error('Error loading reservations:', err);
+  }
+}
+
+// Handle form submission
+document.getElementById('reservationForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  // Collect form data
+  const formData = {
+    name: document.getElementById('name').value,
+    email: document.getElementById('email').value,
+    phone: document.getElementById('phone').value,
+    date: document.getElementById('date').value,
+    time: document.getElementById('time').value,
+    people: parseInt(document.getElementById('guests').value),
+    special_requests: document.getElementById('specialRequests').value
+  };
+  
+  // Check table availability first
+  try {
+    const availabilityCheck = await fetch(`${API_BASE}/reservations/check-availability?date=${formData.date}&time=${formData.time}&people=${formData.people}`);
+    const availabilityResult = await availabilityCheck.json();
+    
+    if (!availabilityResult.available) {
+      showMessage(availabilityResult.message || 'No suitable tables available for this time slot. Please choose another time or date.', 'error');
+      return;
+    }
+    
+    // Show available tables info
+    showMessage(`✅ ${availabilityResult.message}`, 'success');
+    
+  } catch (err) {
+    console.error('Error checking availability:', err);
+    showMessage('Error checking table availability. Please try again.', 'error');
+    return;
+  }
+  
+  // Collect menu items
+  const menuItems = [];
+  const menuSelects = document.querySelectorAll('.menu-item-select');
+  const menuQuantities = document.querySelectorAll('.menu-item-quantity');
+  
+  menuSelects.forEach((select, index) => {
+    if (select.value) {
+      const selectedOption = select.options[select.selectedIndex];
+      const itemName = selectedOption.text.split(' - ')[0]; // Remove price part
+      const quantity = parseInt(menuQuantities[index].value) || 1;
+      
+      menuItems.push({
+        id: parseInt(select.value),
+        name: itemName,
+        quantity: quantity
+      });
+    }
+  });
+  
+  const data = {
+    ...formData,
+    order_items: menuItems.length > 0 ? JSON.stringify(menuItems) : null
+  };
+  
+  try {
+    const res = await fetch(`${API_BASE}/reservations`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    
+    const result = await res.json();
+    
+    if (res.ok) {
+      showMessage(`Reservation successful! Reservation ID: ${result.reservationId}`, 'success');
+      e.target.reset();
+      loadUserData();
+      // Reset menu items to single row
+      const container = document.getElementById('menuItemsContainer');
+      container.innerHTML = `
+        <div class="menu-item-row flex gap-3">
+          <select class="menu-item-select form-input flex-1 px-4 py-3 rounded-xl">
+            <option value="">Select Menu Item</option>
+          </select>
+          <input type="number" class="menu-item-quantity form-input w-20 px-3 py-3 rounded-xl text-center" 
+                 placeholder="Qty" min="1" max="10" value="1">
+          <button type="button" class="remove-menu-item bg-red-500 text-white px-3 py-3 rounded-xl hover:bg-red-600 transition-colors" 
+                  style="display: none;">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `;
+      loadMenu(); // Reload menu options
+      await loadTables();
+      await loadMyReservations();
+    } else {
+      showMessage(result.message || 'Error making reservation', 'error');
+    }
+  } catch (err) {
+    console.error('Error submitting reservation:', err);
+    showMessage('Network error. Please try again.', 'error');
+  }
+});
+
+// Show message
+function showMessage(text, type = 'success') {
+  const msgDiv = document.getElementById('formMessage');
+  msgDiv.textContent = text;
+  msgDiv.className = `mt-6 text-center p-4 rounded-lg ${
+    type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+  }`;
+  
+  setTimeout(() => {
+    msgDiv.textContent = '';
+    msgDiv.className = 'mt-6 text-center';
+  }, 5000);
+}
+
+// Logout function
+function logoutUser() {
+  sessionStorage.removeItem('bitcrave-user');
+  sessionStorage.removeItem('bitcrave-token');
+  window.location.href = 'login.html';
+}
+
+// Initialize page
+setMinDate();
+loadUserData();
+loadMenu();
+loadMyReservations();
+
+// Add event listeners for table loading
+document.getElementById('date').addEventListener('change', loadTables);
+document.getElementById('time').addEventListener('change', loadTables);
+document.getElementById('guests').addEventListener('change', loadTables);
+
+// Add event listeners for real-time availability checking
+document.getElementById('date').addEventListener('change', checkAvailability);
+document.getElementById('time').addEventListener('change', checkAvailability);
+document.getElementById('guests').addEventListener('change', checkAvailability);
+
+// Add event listeners for menu items
+document.getElementById('addMenuItem').addEventListener('click', addMenuItemRow);
+
+// Event delegation for remove menu item buttons
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.remove-menu-item')) {
+    removeMenuItemRow(e.target.closest('.remove-menu-item'));
+  }
+});
+
+// Auto-refresh every 30 seconds
+setInterval(() => {
+  loadTables();
+  loadMyReservations();
+}, 30000);
+</script>
+</body>
+</html>

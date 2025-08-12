@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bit Crave - Register</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
+        }
+        .register-container {
+            position: relative;
+            z-index: 2;
+            width: 400px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+        .register-header {
+            background: #5d4037;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .register-header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.4rem;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .register-form {
+            padding: 30px 40px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: block;
+            font-size: 0.9rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #d7ccc8;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.9);
+            font-size: 0.95rem;
+        }
+        .register-btn {
+            width: 100%;
+            padding: 14px;
+            background: #5d4037;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .register-btn:hover {
+            background: #3e2723;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        .login-link a {
+            color: #8d6e63;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>Register</h1>
+            <p>Create a new account to continue</p>
+        </div>
+
+        <form class="register-form" id="registerForm">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" placeholder="Your Name" required />
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="your@email.com" required />
+            </div>
+            <div class="form-group">
+            <label for="phone">Phone Number</label>
+             <input type="tel" id="phone" placeholder="Enter 10-digit phone number" pattern="[0-9]{10}" required />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="••••••••" required />
+            </div>
+
+            <button type="submit" class="register-btn">Sign Up</button>
+
+            <div class="login-link">
+                <p>Already have an account? <a href="login.html">Login here</a></p>
+            </div>
+        </form>
+    </div>
+
+ <!-- Firebase v8.10.1 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+<!-- <script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDSwE0RsuGc-ttWIyz68pJx68UVv8Wz1Co",
+    authDomain: "bitcrave-d6cfe.firebaseapp.com",
+    projectId: "bitcrave-d6cfe",
+    storageBucket: "bitcrave-d6cfe.appspot.com",
+    messagingSenderId: "1009012061578",
+    appId: "1:1009012061578:web:a232806c2624faa5680473",
+    measurementId: "G-743LM64PC0"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  document.getElementById("registerForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+
+    if (!name || !email || !password || !phone) {
+      return alert("Please fill all fields.");
+    }
+
+    if (!/^\d{10}$/.test(phone)) {
+      return alert("Please enter a valid 10-digit phone number.");
+    }
+
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then(userCredential => {
+        const user = userCredential.user;
+
+        return user.updateProfile({
+          displayName: name
+        }).then(() => {
+          // Store in sessionStorage
+          sessionStorage.setItem("bitcrave-user", JSON.stringify({
+            name: name,
+            email: email,
+            phone: phone
+          }));
+          alert("✅ Registered successfully!");
+          window.location.href = "reservations.html";
+        });
+      })
+      .catch(error => {
+        console.error(error);
+        alert("❌ Registration failed: " + error.message);
+      });
+  });
+</script> -->
+
+<script>
+  document.getElementById("registerForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+
+    if (!name || !email || !password || !phone) {
+      return alert("Please fill all fields.");
+    }
+
+    if (!/^\d{10}$/.test(phone)) {
+      return alert("Please enter a valid 10-digit phone number.");
+    }
+
+    try {
+      const res = await fetch("http://localhost:5000/api/users/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, email, phone, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Registration failed");
+      }
+
+      alert("✅ Registered successfully!");
+      sessionStorage.setItem("bitcrave-user", JSON.stringify({ name, email, phone }));
+      window.location.href = "reservations.html";
+
+    } catch (error) {
+      console.error(error);
+      alert("❌ Registration failed: " + error.message);
+    }
+  });
+</script>
+
+</body>
+</html>

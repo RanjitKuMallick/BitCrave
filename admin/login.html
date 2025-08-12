@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login | BitCrave</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f5f5f5;
+    }
+    .login-box {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .debug-info {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h3 class="text-center mb-3">🍽️ BitCrave Admin</h3>
+    <p class="text-center text-muted mb-4">Restaurant Management System</p>
+    
+    <form id="loginForm" onsubmit="return login(event)">
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" id="username" required />
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" required />
+      </div>
+      <button type="submit" class="btn btn-primary w-100" id="loginBtn">
+        <span id="loginBtnText">Login</span>
+        <span id="loginBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+      </button>
+    </form>
+    
+    <div id="loginMessage" class="mt-3 text-center"></div>
+    
+    <div class="mt-4 text-center">
+      <small class="text-muted">
+        Default credentials: admin / admin123
+      </small>
+    </div>
+    
+    <div class="debug-info">
+      <strong>Debug Info:</strong><br>
+      API Base: <span id="apiBase">http://localhost:5000/api</span><br>
+      Server Status: <span id="serverStatus">Checking...</span>
+    </div>
+  </div>
+
+<script>
+  const API_BASE = 'http://localhost:5000/api';
+
+  // Check server status on page load
+  window.addEventListener('load', async () => {
+    const serverStatus = document.getElementById('serverStatus');
+    
+    try {
+      const response = await fetch(API_BASE.replace('/api', ''));
+      if (response.ok) {
+        serverStatus.textContent = '✅ Connected';
+        serverStatus.style.color = 'green';
+      } else {
+        serverStatus.textContent = '❌ Error';
+        serverStatus.style.color = 'red';
+      }
+    } catch (error) {
+      serverStatus.textContent = '❌ Offline';
+      serverStatus.style.color = 'red';
+    }
+  });
+
+  async function login(event) {
+    event.preventDefault();
+
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const loginMessage = document.getElementById("loginMessage");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginBtnText = document.getElementById("loginBtnText");
+    const loginBtnSpinner = document.getElementById("loginBtnSpinner");
+
+    // Show loading state
+    loginBtn.classList.add("loading");
+    loginBtnText.textContent = "Logging in...";
+    loginBtnSpinner.classList.remove("d-none");
+    loginMessage.textContent = "";
+
+    try {
+      console.log('🔐 Attempting admin login...');
+      console.log('URL:', `${API_BASE}/admin/login`);
+      console.log('Data:', { username, password });
+
+      const response = await fetch(`${API_BASE}/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      console.log('Response status:', response.status);
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (response.ok) {
+        // Store admin token and session info
+        localStorage.setItem("bitcrave-admin-token", data.token);
+        localStorage.setItem("bitcrave-admin-session", data.sessionToken);
+        localStorage.setItem("bitcrave-admin-user", JSON.stringify(data.admin));
+
+        // Show success message
+        loginMessage.className = "mt-3 text-center text-success";
+        loginMessage.textContent = "✅ Login successful! Redirecting...";
+
+        // Redirect to dashboard
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 1000);
+      } else {
+        // Show error message
+        loginMessage.className = "mt-3 text-center text-danger";
+        loginMessage.textContent = `❌ ${data.message || 'Login failed'}`;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      loginMessage.className = "mt-3 text-center text-danger";
+      loginMessage.textContent = "❌ Network error. Please check your connection.";
+    } finally {
+      // Reset loading state
+      loginBtn.classList.remove("loading");
+      loginBtnText.textContent = "Login";
+      loginBtnSpinner.classList.add("d-none");
+    }
+  }
+
+  // Check if already logged in
+  window.addEventListener('load', () => {
+    const token = localStorage.getItem("bitcrave-admin-token");
+    const sessionToken = localStorage.getItem("bitcrave-admin-session");
+    
+    if (token && sessionToken) {
+      // Verify session is still valid by making a test request
+      fetch(`${API_BASE}/admin/session`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(response => {
+        if (response.ok) {
+          // Session is valid, redirect to dashboard
+          window.location.href = "dashboard.html";
+        } else {
+          // Session is invalid, clear storage
+          localStorage.removeItem("bitcrave-admin-token");
+          localStorage.removeItem("bitcrave-admin-session");
+          localStorage.removeItem("bitcrave-admin-user");
+        }
+      })
+      .catch(() => {
+        // Network error, clear storage
+        localStorage.removeItem("bitcrave-admin-token");
+        localStorage.removeItem("bitcrave-admin-session");
+        localStorage.removeItem("bitcrave-admin-user");
+      });
+    }
+  });
+</script>
+
+</body>
+</html>

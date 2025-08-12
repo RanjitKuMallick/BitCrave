@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BitCrave Admin - Records & Reports</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body.dark-mode {
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+    .card.dark-mode, .table.dark-mode, .navbar.dark-mode {
+      background-color: #1e1e1e !important;
+      color: #fff !important;
+    }
+    .feedback-box {
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .stats-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+   <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+    <a class="navbar-brand fw-bold" href="dashboard.html">← Back to Dashboard</a>
+    <div class="ms-auto">
+      <button class="btn btn-outline-light" id="darkModeToggle">🌙</button>
+      <button class="btn btn-outline-danger ms-2" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <div class="row g-3 text-center" id="summaryCards">
+      <div class="col-12">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Filter -->
+  <div class="container mb-3">
+    <ul class="nav nav-tabs" id="statusTabs">
+      <li class="nav-item"><button class="nav-link active" onclick="filterStatus('All')">All</button></li>
+      <li class="nav-item"><button class="nav-link" onclick="filterStatus('Pending')">Pending</button></li>
+      <li class="nav-item"><button class="nav-link" onclick="filterStatus('Confirmed')">Confirmed</button></li>
+      <li class="nav-item"><button class="nav-link" onclick="filterStatus('Cancelled')">Cancelled</button></li>
+    </ul>
+  </div>
+
+  <!-- Date Filter -->
+  <div class="container mb-3">
+    <div class="row g-2">
+      <div class="col-md-4">
+        <input type="date" id="dateFilter" class="form-control" />
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-primary" onclick="loadReservations()">🔍 Filter</button>
+        <button class="btn btn-secondary ms-2" onclick="clearFilters()">🔄 Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="container mb-5">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">📋 All Reservations</h5>
+        <div>
+          <span class="badge bg-primary" id="reservationCount">0 reservations</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped" id="adminTable">
+                         <thead class="table-dark">
+               <tr>
+                 <th>#</th>
+                 <th>Name</th>
+                 <th>Date</th>
+                 <th>Time</th>
+                 <th>Guests</th>
+                 <th>Table No</th>
+                 <th>Contact</th>
+                 <th>Order Items</th>
+                 <th>Revenue</th>
+                 <th>Status</th>
+                 <th>Payment</th>
+                 <th>Feedback</th>
+                 <th>Created</th>
+               </tr>
+             </thead>
+                         <tbody id="adminTableBody">
+               <tr>
+                 <td colspan="13" class="text-center">
+                   <div class="spinner-border text-primary" role="status">
+                     <span class="visually-hidden">Loading...</span>
+                   </div>
+                 </td>
+               </tr>
+             </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reports -->
+  <div class="container mb-5">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">📊 Reports & Analytics</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-3">
+            <input type="date" id="reportFrom" class="form-control" />
+          </div>
+          <div class="col-md-3">
+            <input type="date" id="reportTo" class="form-control" />
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary w-100" onclick="generateReport()">📈 Generate Report</button>
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-success w-100" onclick="exportReport()">📊 Export CSV</button>
+          </div>
+        </div>
+        <canvas id="reportChart" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const API_BASE = 'http://localhost:5000/api';
+    let allReservations = [];
+    let menuItems = [];
+    let currentStatusFilter = "All";
+
+    // Check authentication on page load
+    window.addEventListener('load', () => {
+      const token = localStorage.getItem("bitcrave-admin-token");
+      const sessionToken = localStorage.getItem("bitcrave-admin-session");
+      
+      if (!token || !sessionToken) {
+        alert("❌ Please login as admin first!");
+        window.location.href = "login.html";
+        return;
+      }
+      
+      // Verify session is still valid
+      verifySession(token).then(() => {
+        loadData();
+      }).catch(() => {
+        alert("❌ Session expired. Please login again.");
+        window.location.href = "login.html";
+      });
+    });
+
+    // Verify admin session
+    async function verifySession(token) {
+      const response = await fetch(`${API_BASE}/admin/session`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Session invalid');
+      }
+      
+      return await response.json();
+    }
+
+    // Load all data
+    async function loadData() {
+      try {
+        await Promise.all([
+          loadReservations(),
+          loadMenuItems(),
+          loadStats()
+        ]);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        alert('❌ Error loading data. Please refresh the page.');
+      }
+    }
+
+    // Load reservations from API
+    async function loadReservations() {
+      const token = localStorage.getItem("bitcrave-admin-token");
+      
+      try {
+        const response = await fetch(`${API_BASE}/reservations`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        allReservations = data.data || [];
+        
+        updateSummary();
+        renderTable();
+        
+             } catch (error) {
+         console.error('Error loading reservations:', error);
+         document.getElementById("adminTableBody").innerHTML = `
+           <tr>
+             <td colspan="13" class="text-center text-danger">
+               ❌ Error loading reservations: ${error.message}
+             </td>
+           </tr>
+         `;
+       }
+    }
+
+    // Load menu items from API
+    async function loadMenuItems() {
+      try {
+        const response = await fetch(`${API_BASE}/menu`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        menuItems = data.menu || [];
+        
+      } catch (error) {
+        console.error('Error loading menu items:', error);
+      }
+    }
+
+    // Load dashboard stats
+    async function loadStats() {
+      const token = localStorage.getItem("bitcrave-admin-token");
+      
+      try {
+        const response = await fetch(`${API_BASE}/reservations/stats/overview`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const stats = data.stats;
+          
+          updateSummaryCards(stats);
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+         // Update summary cards
+     function updateSummaryCards(stats) {
+       // Calculate total revenue from all reservations
+       const totalRevenue = allReservations.reduce((sum, reservation) => {
+         return sum + calcTotal(reservation.order_items);
+       }, 0);
+
+       // Calculate today's revenue
+       const today = new Date().toISOString().split('T')[0];
+       const todayRevenue = allReservations
+         .filter(reservation => new Date(reservation.date).toISOString().split('T')[0] === today)
+         .reduce((sum, reservation) => sum + calcTotal(reservation.order_items), 0);
+
+       const cardData = [
+         { label: "Total Reservations", value: stats.total || 0, class: "primary" },
+         { label: "Today's Reservations", value: stats.today || 0, class: "success" },
+         { label: "Total Revenue", value: `₹${totalRevenue}`, class: "warning" },
+         { label: "Today's Revenue", value: `₹${todayRevenue}`, class: "info" },
+         { label: "This Week", value: stats.thisWeek || 0, class: "dark" },
+         { label: "This Month", value: stats.thisMonth || 0, class: "secondary" },
+       ];
+
+      const row = document.getElementById("summaryCards");
+      row.innerHTML = cardData.map(c => `
+        <div class="col-md-2 col-6">
+          <div class="stats-card">
+            <h6>${c.label}</h6>
+            <h4>${c.value}</h4>
+          </div>
+        </div>`).join('');
+    }
+
+    // Update summary (legacy function for compatibility)
+    function updateSummary() {
+      const confirmed = allReservations.filter(b => b.status === "Confirmed").length;
+      const pending = allReservations.filter(b => b.status === "Pending").length;
+      const cancelled = allReservations.filter(b => b.status === "Cancelled").length;
+
+      // Update count badge
+      document.getElementById("reservationCount").textContent = `${allReservations.length} reservations`;
+    }
+
+    function filterStatus(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll("#statusTabs .nav-link").forEach(btn => btn.classList.remove("active"));
+      [...document.querySelectorAll("#statusTabs .nav-link")].find(b => b.textContent === status)?.classList.add("active");
+      renderTable();
+    }
+
+    function calcTotal(orderItems = []) {
+      if (!orderItems || !Array.isArray(orderItems)) return 0;
+      
+      return orderItems.reduce((sum, item) => {
+        const found = menuItems.find(m => m.name === item.name);
+        return sum + ((found?.price || 0) * (item.quantity || 1));
+      }, 0);
+    }
+
+    function renderTable() {
+      const date = document.getElementById("dateFilter").value;
+      const filtered = allReservations.filter(b => {
+        const statusMatch = currentStatusFilter === "All" || b.status === currentStatusFilter;
+        const dateMatch = !date || new Date(b.date).toISOString().split('T')[0] === date;
+        return statusMatch && dateMatch;
+      });
+
+      const tbody = document.getElementById("adminTableBody");
+      
+             if (filtered.length === 0) {
+         tbody.innerHTML = `<tr><td colspan="13" class="text-center text-muted">No reservations found.</td></tr>`;
+         return;
+       }
+
+             tbody.innerHTML = filtered.map((b, i) => {
+         const total = calcTotal(b.order_items);
+         const statusColor = b.status === "Confirmed" ? "success" : b.status === "Pending" ? "warning" : "danger";
+         const orderList = (b.order_items || []).map(o => `${o.name} x ${o.quantity}`).join(", ");
+         const dateOnly = b.date ? new Date(b.date).toISOString().split('T')[0] : '';
+         const createdDate = new Date(b.created_at).toLocaleString();
+
+         // Determine payment status badge
+         let paymentBadge = '';
+         if (b.payment_status === 'Paid') {
+           paymentBadge = '<span class="badge bg-success">💰 Paid</span>';
+         } else if (b.payment_status === 'Pending') {
+           paymentBadge = '<span class="badge bg-warning">⏳ Pending</span>';
+         } else {
+           paymentBadge = '<span class="badge bg-secondary">Not Set</span>';
+         }
+
+                   // Determine feedback display
+          let feedbackDisplay = '';
+          if (b.feedback) {
+            try {
+              // Handle both string and object feedback
+              let feedback;
+              if (typeof b.feedback === 'string') {
+                feedback = JSON.parse(b.feedback);
+              } else {
+                feedback = b.feedback;
+              }
+              
+              const serviceStars = '★'.repeat(feedback.service || 0) + '☆'.repeat(5 - (feedback.service || 0));
+              const foodStars = '★'.repeat(feedback.food || 0) + '☆'.repeat(5 - (feedback.food || 0));
+              feedbackDisplay = `
+                <div class="small">
+                  <div>Service: ${serviceStars} (${feedback.service || 0}/5)</div>
+                  <div>Food: ${foodStars} (${feedback.food || 0}/5)</div>
+                  ${feedback.message ? `<div class="text-muted">"${feedback.message}"</div>` : ''}
+                </div>
+              `;
+            } catch (e) {
+              feedbackDisplay = '<span class="text-muted">Invalid feedback</span>';
+            }
+          } else {
+            feedbackDisplay = '<span class="text-muted">No feedback</span>';
+          }
+
+         return `
+         <tr>
+           <td>${i + 1}</td>
+           <td>${b.name}</td>
+           <td>${dateOnly}</td>
+           <td>${b.time}</td>
+           <td>${b.people}</td>
+           <td>${b.table_number || "-"}</td>
+           <td>${b.email}<br><small>${b.phone}</small></td>
+           <td>${orderList || "No items"}</td>
+           <td><strong>₹${total}</strong></td>
+           <td><span class="badge bg-${statusColor}">${b.status}</span></td>
+           <td>${paymentBadge}</td>
+           <td>${feedbackDisplay}</td>
+           <td><small>${createdDate}</small></td>
+         </tr>`;
+       }).join("");
+    }
+
+    function clearFilters() {
+      document.getElementById("dateFilter").value = "";
+      currentStatusFilter = "All";
+      document.querySelectorAll("#statusTabs .nav-link").forEach(btn => btn.classList.remove("active"));
+      document.querySelector("#statusTabs .nav-link").classList.add("active");
+      renderTable();
+    }
+
+    function generateReport() {
+      const from = document.getElementById("reportFrom").value;
+      const to = document.getElementById("reportTo").value;
+      if (!from || !to) return alert("Please select date range");
+
+      const filtered = allReservations.filter(b => {
+        const reservationDate = new Date(b.date).toISOString().split('T')[0];
+        return reservationDate >= from && reservationDate <= to;
+      });
+
+      const daily = {};
+      filtered.forEach(b => {
+        const date = new Date(b.date).toISOString().split('T')[0];
+        if (!daily[date]) daily[date] = { reservations: 0, revenue: 0 };
+        daily[date].reservations += 1;
+        daily[date].revenue += calcTotal(b.order_items);
+      });
+
+      const dates = Object.keys(daily).sort();
+      const reservationData = dates.map(d => daily[d].reservations);
+      const revenueData = dates.map(d => daily[d].revenue);
+
+      const ctx = document.getElementById("reportChart").getContext("2d");
+      if (window.chart) window.chart.destroy();
+      window.chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
+            { label: "Reservations", data: reservationData, borderColor: "#0d6efd", tension: 0.3 },
+            { label: "Revenue (₹)", data: revenueData, borderColor: "#198754", tension: 0.3 }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    function exportReport() {
+      const from = document.getElementById("reportFrom").value;
+      const to = document.getElementById("reportTo").value;
+      if (!from || !to) return alert("Please select date range");
+
+      const filtered = allReservations.filter(b => {
+        const reservationDate = new Date(b.date).toISOString().split('T')[0];
+        return reservationDate >= from && reservationDate <= to;
+      });
+
+             const csvContent = "data:text/csv;charset=utf-8," 
+         + "ID,Name,Email,Phone,Date,Time,Guests,Table,Order Items,Revenue,Status,Payment Status,Feedback,Created\n"
+         + filtered.map(r => {
+           const revenue = calcTotal(r.order_items);
+           let feedbackText = '';
+           if (r.feedback) {
+             try {
+               const feedback = JSON.parse(r.feedback);
+               feedbackText = `Service:${feedback.service || 0}/5,Food:${feedback.food || 0}/5,Message:"${feedback.message || ''}"`;
+             } catch (e) {
+               feedbackText = 'Invalid feedback';
+             }
+           } else {
+             feedbackText = 'No feedback';
+           }
+           return `${r.id},"${r.name}","${r.email}","${r.phone}","${new Date(r.date).toISOString().split('T')[0]}","${r.time}","${r.people}","${r.table_number || ''}","${(r.order_items || []).map(o => `${o.name} x ${o.quantity}`).join('; ')}","₹${revenue}","${r.status}","${r.payment_status || 'Not Set'}","${feedbackText}","${r.created_at}"`;
+         }).join("\n");
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `reservations_report_${from}_to_${to}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Logout function
+    function logout() {
+      const token = localStorage.getItem("bitcrave-admin-token");
+      
+      if (token) {
+        fetch(`${API_BASE}/admin/logout`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).catch(err => console.error('Logout error:', err));
+      }
+      
+      localStorage.removeItem("bitcrave-admin-token");
+      localStorage.removeItem("bitcrave-admin-session");
+      localStorage.removeItem("bitcrave-admin-user");
+      window.location.href = "login.html";
+    }
+
+    // Dark mode toggle
+    document.getElementById("darkModeToggle").addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      document.querySelectorAll(".table, .card, .navbar").forEach(el => el.classList.toggle("dark-mode"));
+    });
+  </script>
+</body>
+</html>
