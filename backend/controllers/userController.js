@@ -100,39 +100,87 @@ exports.logoutUser = async (req, res) => {
       });
     }
 
-    // Optional: Store blacklisted token in database for additional security
-    // This prevents token reuse even if it hasn't expired
-    try {
-      await db.query(
-        'INSERT INTO blacklisted_tokens (token, user_id, blacklisted_at) VALUES (?, ?, NOW())',
-        [token, decoded.id]
-      );
-    } catch (dbError) {
-      // If blacklist table doesn't exist, continue without it
-      console.log('Blacklist table not available, continuing without token blacklisting');
-    }
-
-    // Optional: Update user's last logout time
-    try {
-      await db.query(
-        'UPDATE users SET last_logout = NOW() WHERE id = ?',
-        [decoded.id]
-      );
-    } catch (updateError) {
-      console.log('Could not update last logout time');
-    }
-
+    // Add token to blacklist (optional)
+    // You can implement a blacklist table to track logged out tokens
+    
     res.json({ 
       success: true, 
       message: 'Logout successful' 
     });
-
-  } catch (error) {
-    console.error('Logout error:', error);
+  } catch (err) {
+    console.error('Logout error:', err);
     res.status(500).json({ 
       success: false, 
       message: 'Server error during logout' 
     });
+  }
+};
+
+// Firebase login/registration endpoint
+exports.firebaseLogin = async (req, res) => {
+  const { firebase_uid, email, name, phone, photo_url } = req.body;
+
+  if (!firebase_uid || !email) {
+    return res.status(400).json({ message: 'Firebase UID and email are required' });
+  }
+
+  try {
+    // Check if user exists by Firebase UID
+    const [existingUsers] = await db.query(
+      'SELECT * FROM users WHERE firebase_uid = ? OR email = ?', 
+      [firebase_uid, email]
+    );
+
+    let user;
+
+    if (existingUsers.length > 0) {
+      // User exists, update Firebase UID if needed
+      user = existingUsers[0];
+      
+      if (!user.firebase_uid) {
+        // Update existing user with Firebase UID
+        await db.query(
+          'UPDATE users SET firebase_uid = ?, name = ?, phone = ?, photo_url = ? WHERE id = ?',
+          [firebase_uid, name || user.name, phone || user.phone, photo_url || user.photo_url, user.id]
+        );
+        
+        // Get updated user data
+        const [updatedUsers] = await db.query('SELECT * FROM users WHERE id = ?', [user.id]);
+        user = updatedUsers[0];
+      }
+    } else {
+      // Create new user
+      const [result] = await db.query(
+        'INSERT INTO users (firebase_uid, name, email, phone, photo_url, auth_type) VALUES (?, ?, ?, ?, ?, ?)',
+        [firebase_uid, name || 'Firebase User', email, phone || '', photo_url || '', 'firebase']
+      );
+
+      const [newUsers] = await db.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
+      user = newUsers[0];
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.id, email: user.email, firebase_uid: user.firebase_uid },
+      process.env.JWT_SECRET || 'secretkey',
+      { expiresIn: '1d' }
+    );
+
+    res.json({
+      message: 'Firebase authentication successful',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        firebase_uid: user.firebase_uid,
+        photo_url: user.photo_url
+      }
+    });
+  } catch (err) {
+    console.error('Firebase login error:', err);
+    res.status(500).json({ message: 'Server error during Firebase authentication' });
   }
 };
 

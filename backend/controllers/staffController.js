@@ -100,7 +100,7 @@ exports.getStaffReservations = async (req, res) => {
        WHERE status = "Confirmed" 
        AND (payment_status IS NULL OR payment_status != "Paid")
        AND table_number IN (?)
-       ORDER BY date DESC, time ASC`,
+       ORDER BY created_at DESC`,
       [assignedTableNumbers]
     );
 

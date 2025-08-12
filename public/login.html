@@ -86,9 +86,25 @@
     }
   </style>
 
-  <!-- ✅ Firebase v8.10.1 (global) -->
+  <!-- ✅ Firebase v8 (global) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  
+  <script>
+    // ✅ Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDSwE0RsuGc-ttWIyz68pJx68UVv8Wz1Co",
+      authDomain: "bitcrave-d6cfe.firebaseapp.com",
+      projectId: "bitcrave-d6cfe",
+      storageBucket: "bitcrave-d6cfe.appspot.com",
+      messagingSenderId: "1009012061578",
+      appId: "1:1009012061578:web:a232806c2624faa5680473",
+      measurementId: "G-743LM64PC0"
+    };
+
+    // ✅ Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
 </head>
 <body>
   <div class="login-container">
@@ -108,13 +124,15 @@
         <input type="password" id="password" placeholder="••••••••" required />
       </div>
 
-      <button type="button" class="login-btn" id="loginBtn">Login with Password</button>
+      <button type="button" class="login-btn" id="loginBtn">Login with Database</button>
+      
+      <button type="button" class="login-btn" id="firebaseLoginBtn" style="background:#FF6B35;">
+        🔥 Login with Firebase
+      </button>
 
       <button type="button" class="login-btn" id="googleLoginBtn" style="background:#4285F4;">
         <img src="https://img.icons8.com/color/16/000000/google-logo.png" style="margin-right:8px;"> Login with Google
       </button>
-
-      <button type="button" class="login-btn" id="getOtpBtn" disabled style="background:gray;">Login with OTP (Coming Soon)</button>
 
       <div class="register-link">
         <p>Don't have an account? <a href="register.html">Register here</a></p>
@@ -122,74 +140,6 @@
     </form>
   </div>
 
-  <!--<script>
-    // ✅ Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyDSwE0RsuGc-ttWIyz68pJx68UVv8Wz1Co",
-  authDomain: "bitcrave-d6cfe.firebaseapp.com",
-  projectId: "bitcrave-d6cfe",
-  storageBucket: "bitcrave-d6cfe.appspot.com",
-  messagingSenderId: "1009012061578",
-  appId: "1:1009012061578:web:a232806c2624faa5680473",
-  measurementId: "G-743LM64PC0"
-};
-
-    // ✅ Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-
-    // ✅ Google Login
-    document.getElementById("googleLoginBtn").addEventListener("click", () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-
-      firebase.auth().signInWithPopup(provider)
-        .then(result => {
-          const user = result.user;
-          const userData = {
-            name: user.displayName || "Guest",
-            email: user.email,
-            image: user.photoURL
-          };
-          sessionStorage.setItem("bitcrave-user", JSON.stringify(userData));
-          alert("✅ Logged in with Google!");
-          window.location.href = "reservations.html";
-        })
-        .catch(error => {
-          console.error(error);
-          alert("❌ Google login failed: " + error.message);
-        });
-    });
-
-    // ✅ Password Login
-    document.getElementById("loginBtn").addEventListener("click", function () {
-      const email = document.getElementById("identifier").value.trim();
-      const password = document.getElementById("password").value.trim();
-
-      if (!email || !password) {
-        return alert("Please enter both email and password.");
-      }
-
-      firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(userCredential => {
-          const user = userCredential.user;
-          const userData = {
-            name: user.displayName || "Guest",
-            email: user.email
-          };
-          sessionStorage.setItem("bitcrave-user", JSON.stringify(userData));
-          alert("✅ Login successful!");
-          window.location.href = "reservations.html";
-        })
-        .catch(error => {
-          console.error(error);
-          alert("❌ Login failed: " + error.message);
-        });
-    });
-
-    // Placeholder for OTP login
-    document.getElementById("getOtpBtn").addEventListener("click", () => {
-      alert("📱 OTP Login is not available yet.");
-    });
-  </script>-->
 <script>
 document.getElementById("loginBtn").addEventListener("click", async function () {
   const email = document.getElementById("identifier").value.trim();
@@ -225,6 +175,214 @@ document.getElementById("loginBtn").addEventListener("click", async function () 
     alert("❌ Server error. Please try again.");
   }
 });
+</script>
+
+<script>
+  // Wait for Firebase to be initialized
+  document.addEventListener('DOMContentLoaded', function() {
+    // Database Login (existing)
+    document.getElementById("loginBtn").addEventListener("click", async function () {
+      const email = document.getElementById("identifier").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!email || !password) {
+        return alert("Please enter both email and password.");
+      }
+
+      try {
+        const res = await fetch("http://localhost:5000/api/users/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          return alert(`❌ Login failed: ${data.message}`);
+        }
+
+        // Save token and user in sessionStorage
+        sessionStorage.setItem("bitcrave-token", data.token);
+        sessionStorage.setItem("bitcrave-user", JSON.stringify(data.user));
+
+        alert("✅ Database login successful!");
+        window.location.href = "reservations.html";
+      } catch (err) {
+        console.error(err);
+        alert("❌ Server error. Please try again.");
+      }
+    });
+
+    // Firebase Email/Password Login
+    document.getElementById("firebaseLoginBtn").addEventListener("click", async function () {
+      const email = document.getElementById("identifier").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!email || !password) {
+        return alert("Please enter both email and password.");
+      }
+
+      try {
+        console.log("🔥 Starting Firebase login...");
+        
+        // Firebase authentication
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        console.log("✅ Firebase auth successful:", user.email);
+
+        // Send user data to backend for verification/registration
+        const backendResponse = await fetch("http://localhost:5000/api/users/firebase-login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            firebase_uid: user.uid,
+            email: user.email,
+            name: user.displayName || "Firebase User",
+            phone: user.phoneNumber || ""
+          })
+        });
+
+        console.log("📊 Backend response status:", backendResponse.status);
+
+        if (backendResponse.ok) {
+          const backendData = await backendResponse.json();
+          console.log("✅ Backend response:", backendData);
+
+          // Save user data
+          const userData = {
+            id: backendData.user.id,
+            name: user.displayName || backendData.user.name,
+            email: user.email,
+            phone: user.phoneNumber || backendData.user.phone,
+            firebase_uid: user.uid
+          };
+
+          sessionStorage.setItem("bitcrave-user", JSON.stringify(userData));
+          sessionStorage.setItem("bitcrave-firebase-token", await user.getIdToken());
+          
+          // Also save the regular token for compatibility with existing pages
+          sessionStorage.setItem("bitcrave-token", backendData.token);
+
+          alert("✅ Firebase login successful!");
+          window.location.href = "reservations.html";
+        } else {
+          const errorText = await backendResponse.text();
+          console.error("❌ Backend error response:", errorText);
+          
+          try {
+            const errorData = JSON.parse(errorText);
+            alert(`❌ Backend error: ${errorData.message || errorData.error}`);
+          } catch (e) {
+            alert(`❌ Backend error: ${backendResponse.status} - ${errorText}`);
+          }
+        }
+      } catch (error) {
+        console.error("Firebase login error:", error);
+        
+        if (error.code === 'auth/user-not-found') {
+          alert("❌ User not found. Please register first or use database login.");
+        } else if (error.code === 'auth/wrong-password') {
+          alert("❌ Wrong password. Please try again.");
+        } else if (error.code === 'auth/invalid-email') {
+          alert("❌ Invalid email format.");
+        } else {
+          alert(`❌ Firebase login failed: ${error.message}`);
+        }
+      }
+    });
+
+    // Google Login
+    document.getElementById("googleLoginBtn").addEventListener("click", async function () {
+      try {
+        console.log("🔥 Starting Google login...");
+        
+        // Firebase Google authentication
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await firebase.auth().signInWithPopup(provider);
+        const user = result.user;
+
+        console.log("✅ Google auth successful:", user.email);
+
+        // Send user data to backend for verification/registration
+        const backendResponse = await fetch("http://localhost:5000/api/users/firebase-login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            firebase_uid: user.uid,
+            email: user.email,
+            name: user.displayName || "Google User",
+            phone: user.phoneNumber || "",
+            photo_url: user.photoURL || ""
+          })
+        });
+
+        console.log("📊 Backend response status:", backendResponse.status);
+
+        if (backendResponse.ok) {
+          const backendData = await backendResponse.json();
+          console.log("✅ Backend response:", backendData);
+
+          // Save user data
+          const userData = {
+            id: backendData.user.id,
+            name: user.displayName || backendData.user.name,
+            email: user.email,
+            phone: user.phoneNumber || backendData.user.phone,
+            firebase_uid: user.uid,
+            photo_url: user.photoURL
+          };
+
+          console.log("💾 Saving user data to sessionStorage:", userData);
+          sessionStorage.setItem("bitcrave-user", JSON.stringify(userData));
+          
+          const firebaseToken = await user.getIdToken();
+          console.log("🔥 Saving Firebase token");
+          sessionStorage.setItem("bitcrave-firebase-token", firebaseToken);
+          
+          // Also save the regular token for compatibility with existing pages
+          console.log("🔑 Saving regular token for compatibility");
+          sessionStorage.setItem("bitcrave-token", backendData.token);
+
+          console.log("✅ All data saved successfully");
+          alert("✅ Google login successful! Redirecting to reservations...");
+          
+          console.log("🔄 Attempting redirect to reservations.html");
+          setTimeout(() => {
+            console.log("🔄 Redirecting now...");
+            window.location.href = "reservations.html";
+          }, 1000);
+        } else {
+          const errorText = await backendResponse.text();
+          console.error("❌ Backend error response:", errorText);
+          
+          try {
+            const errorData = JSON.parse(errorText);
+            alert(`❌ Backend error: ${errorData.message || errorData.error}`);
+          } catch (e) {
+            alert(`❌ Backend error: ${backendResponse.status} - ${errorText}`);
+          }
+        }
+      } catch (error) {
+        console.error("Google login error:", error);
+        
+        if (error.code === 'auth/popup-closed-by-user') {
+          alert("❌ Login cancelled by user.");
+        } else if (error.code === 'auth/popup-blocked') {
+          alert("❌ Popup blocked by browser. Please allow popups for this site.");
+        } else {
+          alert(`❌ Google login failed: ${error.message}`);
+        }
+      }
+    });
+  });
 </script>
 
 

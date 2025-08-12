@@ -1,210 +1,203 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bit Crave - Register</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Open Sans', sans-serif;
-            background: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
-            background-size: cover;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            z-index: 1;
-        }
-        .register-container {
-            position: relative;
-            z-index: 2;
-            width: 400px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
-        }
-        .register-header {
-            background: #5d4037;
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-        }
-        .register-header h1 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 2.4rem;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        .register-form {
-            padding: 30px 40px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            font-weight: 600;
-            margin-bottom: 6px;
-            display: block;
-            font-size: 0.9rem;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #d7ccc8;
-            border-radius: 4px;
-            background: rgba(255,255,255,0.9);
-            font-size: 0.95rem;
-        }
-        .register-btn {
-            width: 100%;
-            padding: 14px;
-            background: #5d4037;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .register-btn:hover {
-            background: #3e2723;
-        }
-        .login-link {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.9rem;
-        }
-        .login-link a {
-            color: #8d6e63;
-            text-decoration: none;
-            font-weight: 600;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bit Crave - Register</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1;
+    }
+    .register-container {
+      position: relative;
+      z-index: 2;
+      width: 450px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 8px;
+      padding: 30px 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    .register-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    .register-header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.5rem;
+      color: #5d4037;
+      margin-bottom: 10px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.95rem;
+    }
+    .register-btn {
+      width: 100%;
+      padding: 14px;
+      background: #5d4037;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .register-btn:hover {
+      background: #3e2723;
+    }
+    .login-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.9rem;
+    }
+    .login-link a {
+      color: #8d6e63;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .divider {
+      text-align: center;
+      margin: 20px 0;
+      position: relative;
+    }
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #ccc;
+    }
+    .divider span {
+      background: rgba(255,255,255,0.95);
+      padding: 0 15px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+  </style>
+
+  <!-- ✅ Firebase v8 (global) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  
+  <script>
+    // ✅ Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDSwE0RsuGc-ttWIyz68pJx68UVv8Wz1Co",
+      authDomain: "bitcrave-d6cfe.firebaseapp.com",
+      projectId: "bitcrave-d6cfe",
+      storageBucket: "bitcrave-d6cfe.appspot.com",
+      messagingSenderId: "1009012061578",
+      appId: "1:1009012061578:web:a232806c2624faa5680473",
+      measurementId: "G-743LM64PC0"
+    };
+
+    // ✅ Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
 </head>
 <body>
-    <div class="register-container">
-        <div class="register-header">
-            <h1>Register</h1>
-            <p>Create a new account to continue</p>
-        </div>
-
-        <form class="register-form" id="registerForm">
-            <div class="form-group">
-                <label for="name">Full Name</label>
-                <input type="text" id="name" placeholder="Your Name" required />
-            </div>
-
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" placeholder="your@email.com" required />
-            </div>
-            <div class="form-group">
-            <label for="phone">Phone Number</label>
-             <input type="tel" id="phone" placeholder="Enter 10-digit phone number" pattern="[0-9]{10}" required />
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="••••••••" required />
-            </div>
-
-            <button type="submit" class="register-btn">Sign Up</button>
-
-            <div class="login-link">
-                <p>Already have an account? <a href="login.html">Login here</a></p>
-            </div>
-        </form>
+  <div class="register-container">
+    <div class="register-header">
+      <h1>Bit Crave</h1>
+      <p>Create Your Account</p>
     </div>
 
- <!-- Firebase v8.10.1 -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <form id="registerForm">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" required placeholder="Enter your full name" />
+      </div>
 
-<!-- <script>
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyDSwE0RsuGc-ttWIyz68pJx68UVv8Wz1Co",
-    authDomain: "bitcrave-d6cfe.firebaseapp.com",
-    projectId: "bitcrave-d6cfe",
-    storageBucket: "bitcrave-d6cfe.appspot.com",
-    messagingSenderId: "1009012061578",
-    appId: "1:1009012061578:web:a232806c2624faa5680473",
-    measurementId: "G-743LM64PC0"
-  };
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" required placeholder="Enter your email" />
+      </div>
 
-  firebase.initializeApp(firebaseConfig);
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" required placeholder="Enter your phone number" />
+      </div>
 
-  document.getElementById("registerForm").addEventListener("submit", function (e) {
-    e.preventDefault();
+      <div class="form-group" id="passwordGroup">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="••••••••" required />
+      </div>
 
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const phone = document.getElementById("phone").value.trim();
+      <div class="form-group" id="confirmPasswordGroup">
+        <label for="confirmPassword">Confirm Password</label>
+        <input type="password" id="confirmPassword" placeholder="••••••••" required />
+      </div>
 
-    if (!name || !email || !password || !phone) {
-      return alert("Please fill all fields.");
-    }
+      <button type="button" class="register-btn" id="registerBtn">Register with Database</button>
+      
+      <div class="divider">
+        <span>OR</span>
+      </div>
+      
+      <button type="button" class="register-btn" id="firebaseRegisterBtn" style="background:#FF6B35;">
+        🔥 Register with Firebase
+      </button>
 
-    if (!/^\d{10}$/.test(phone)) {
-      return alert("Please enter a valid 10-digit phone number.");
-    }
+      <button type="button" class="register-btn" id="googleRegisterBtn" style="background:#4285F4;">
+        <img src="https://img.icons8.com/color/16/000000/google-logo.png" style="margin-right:8px;"> Register with Google
+      </button>
 
-    firebase.auth().createUserWithEmailAndPassword(email, password)
-      .then(userCredential => {
-        const user = userCredential.user;
-
-        return user.updateProfile({
-          displayName: name
-        }).then(() => {
-          // Store in sessionStorage
-          sessionStorage.setItem("bitcrave-user", JSON.stringify({
-            name: name,
-            email: email,
-            phone: phone
-          }));
-          alert("✅ Registered successfully!");
-          window.location.href = "reservations.html";
-        });
-      })
-      .catch(error => {
-        console.error(error);
-        alert("❌ Registration failed: " + error.message);
-      });
-  });
-</script> -->
+      <div class="login-link">
+        <p>Already have an account? <a href="login.html">Login here</a></p>
+      </div>
+    </form>
+  </div>
 
 <script>
-  document.getElementById("registerForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
+  // Database Registration
+  document.getElementById("registerBtn").addEventListener("click", async function () {
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
     const phone = document.getElementById("phone").value.trim();
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
 
-    if (!name || !email || !password || !phone) {
-      return alert("Please fill all fields.");
+    if (!name || !email || !phone || !password || !confirmPassword) {
+      return alert("Please fill in all fields.");
     }
 
-    if (!/^\d{10}$/.test(phone)) {
-      return alert("Please enter a valid 10-digit phone number.");
+    if (password !== confirmPassword) {
+      return alert("Passwords do not match.");
+    }
+
+    if (password.length < 6) {
+      return alert("Password must be at least 6 characters long.");
     }
 
     try {
@@ -219,16 +212,128 @@
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Registration failed");
+        return alert(`❌ Registration failed: ${data.message}`);
       }
 
-      alert("✅ Registered successfully!");
-      sessionStorage.setItem("bitcrave-user", JSON.stringify({ name, email, phone }));
-      window.location.href = "reservations.html";
+      alert("✅ Registration successful! Please login.");
+      window.location.href = "login.html";
+    } catch (err) {
+      console.error(err);
+      alert("❌ Server error. Please try again.");
+    }
+  });
 
+  // Firebase Email/Password Registration
+  document.getElementById("firebaseRegisterBtn").addEventListener("click", async function () {
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+
+    if (!name || !email || !phone || !password || !confirmPassword) {
+      return alert("Please fill in all fields.");
+    }
+
+    if (password !== confirmPassword) {
+      return alert("Passwords do not match.");
+    }
+
+    if (password.length < 6) {
+      return alert("Password must be at least 6 characters long.");
+    }
+
+    try {
+      // Firebase authentication
+      const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+
+      // Update user profile
+      await user.updateProfile({
+        displayName: name
+      });
+
+      // Send user data to backend for registration
+      const backendResponse = await fetch("http://localhost:5000/api/users/firebase-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          firebase_uid: user.uid,
+          email: user.email,
+          name: name,
+          phone: phone
+        })
+      });
+
+      const backendData = await backendResponse.json();
+
+      if (backendResponse.ok) {
+        alert("✅ Firebase registration successful! Please login.");
+        window.location.href = "login.html";
+      } else {
+        alert(`❌ Backend error: ${backendData.message}`);
+      }
     } catch (error) {
-      console.error(error);
-      alert("❌ Registration failed: " + error.message);
+      console.error("Firebase registration error:", error);
+      
+      if (error.code === 'auth/email-already-in-use') {
+        alert("❌ Email already registered. Please use a different email or login.");
+      } else if (error.code === 'auth/weak-password') {
+        alert("❌ Password is too weak. Please use a stronger password.");
+      } else {
+        alert(`❌ Firebase registration failed: ${error.message}`);
+      }
+    }
+  });
+
+  // Google Registration
+  document.getElementById("googleRegisterBtn").addEventListener("click", async function () {
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+
+    if (!name || !phone) {
+      return alert("Please enter your name and phone number.");
+    }
+
+    try {
+      // Firebase Google authentication
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const result = await firebase.auth().signInWithPopup(provider);
+      const user = result.user;
+
+      // Send user data to backend for registration
+      const backendResponse = await fetch("http://localhost:5000/api/users/firebase-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          firebase_uid: user.uid,
+          email: user.email,
+          name: name || user.displayName || "Google User",
+          phone: phone,
+          photo_url: user.photoURL || ""
+        })
+      });
+
+      const backendData = await backendResponse.json();
+
+      if (backendResponse.ok) {
+        alert("✅ Google registration successful! Please login.");
+        window.location.href = "login.html";
+      } else {
+        alert(`❌ Backend error: ${backendData.message}`);
+      }
+    } catch (error) {
+      console.error("Google registration error:", error);
+      
+      if (error.code === 'auth/popup-closed-by-user') {
+        alert("❌ Registration cancelled by user.");
+      } else {
+        alert(`❌ Google registration failed: ${error.message}`);
+      }
     }
   });
 </script>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Redirect</title>
+</head>
+<body>
+    <h1>Test Redirect Page</h1>
+    <p>This page tests if authentication and redirects work properly.</p>
+    
+    <div id="authStatus"></div>
+    <div id="userInfo"></div>
+    
+    <button onclick="checkAuth()">Check Authentication</button>
+    <button onclick="goToReservations()">Go to Reservations</button>
+    <button onclick="logout()">Logout</button>
+
+    <script>
+        function checkAuth() {
+            const token = sessionStorage.getItem('bitcrave-token');
+            const firebaseToken = sessionStorage.getItem('bitcrave-firebase-token');
+            const user = sessionStorage.getItem('bitcrave-user');
+            
+            const statusDiv = document.getElementById('authStatus');
+            const userDiv = document.getElementById('userInfo');
+            
+            if (token || firebaseToken) {
+                statusDiv.innerHTML = '<p style="color: green;">✅ Authentication tokens found!</p>';
+                if (user) {
+                    const userData = JSON.parse(user);
+                    userDiv.innerHTML = `<p><strong>User:</strong> ${userData.name} (${userData.email})</p>`;
+                }
+            } else {
+                statusDiv.innerHTML = '<p style="color: red;">❌ No authentication tokens found</p>';
+                userDiv.innerHTML = '';
+            }
+        }
+        
+        function goToReservations() {
+            window.location.href = 'reservations.html';
+        }
+        
+        function logout() {
+            sessionStorage.removeItem('bitcrave-user');
+            sessionStorage.removeItem('bitcrave-token');
+            sessionStorage.removeItem('bitcrave-firebase-token');
+            window.location.href = 'login.html';
+        }
+        
+        // Check auth on page load
+        checkAuth();
+    </script>
+</body>
+</html>

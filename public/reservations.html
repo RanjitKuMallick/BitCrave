@@ -352,10 +352,14 @@
 <script>
 const API_BASE = 'http://localhost:5000/api';
 const token = sessionStorage.getItem('bitcrave-token');
+const firebaseToken = sessionStorage.getItem('bitcrave-firebase-token');
 
-// Check authentication
-if (!token) {
+// Check authentication - accept either regular token or Firebase token
+if (!token && !firebaseToken) {
+  console.log("❌ No authentication token found, redirecting to login");
   window.location.href = 'login.html';
+} else {
+  console.log("✅ Authentication token found");
 }
 
 // Load user data
@@ -703,6 +707,7 @@ function showMessage(text, type = 'success') {
 function logoutUser() {
   sessionStorage.removeItem('bitcrave-user');
   sessionStorage.removeItem('bitcrave-token');
+  sessionStorage.removeItem('bitcrave-firebase-token');
   window.location.href = 'login.html';
 }
 

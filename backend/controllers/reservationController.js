@@ -187,7 +187,8 @@ exports.getAllReservations = async (req, res) => {
       params.push(searchTerm, searchTerm, searchTerm);
     }
     
-    query += ' ORDER BY date DESC, time DESC';
+    // Sort by created_at in descending order (newest first)
+    query += ' ORDER BY created_at DESC';
     
     const [rows] = await db.query(query, params);
     
